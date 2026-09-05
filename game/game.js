@@ -25,6 +25,13 @@
   atlas.src = "assets/sprite-atlas-v2.png";
   const luciferSprite = new Image();
   luciferSprite.src = "assets/lucifer.png";
+  const soundtrack = new Audio("music/ceu-lavanda-game.mp3");
+  soundtrack.loop = true;
+  soundtrack.preload = "auto";
+  soundtrack.volume = 0.42;
+  soundtrack.playbackRate = 0.78;
+  soundtrack.preservesPitch = false;
+  soundtrack.webkitPreservesPitch = false;
 
   const SPRITES = {
     priest: [105, 66, 128, 218],
@@ -111,7 +118,20 @@
     hell: { id: "hell", label: "HELL", speed: 1.38, spawn: 0.68, invulnerability: 1.05 }
   };
 
-  const keys = { left: false, right: false };
+  const ROPE_MIN = 28;
+  const ROPE_MAX = 62;
+  const ROPE_DEFAULT = 45;
+  const BALLOON_FORMATION = [
+    { x: 0, y: -16 },
+    { x: -9, y: -9 },
+    { x: 9, y: -7 },
+    { x: -15, y: -1 },
+    { x: 15, y: 1 },
+    { x: -6, y: 4 },
+    { x: 6, y: 6 }
+  ];
+
+  const keys = { left: false, right: false, up: false, down: false };
   const player = { x: W / 2, y: 210, w: 12, h: 19, speed: 68, invulnerable: 0 };
   let state = "title";
   let stageIndex = 0;
@@ -125,11 +145,10 @@
   let lastTime = performance.now();
   let currentStoryAction = "start-stage";
   let audio = null;
-  let musicTimer = null;
-  let musicStep = 0;
+  let ropeLength = ROPE_DEFAULT;
   let difficulty = difficulties.normal;
   let skyTransition = null;
-  const touch = { active: false, pointerId: null, originX: 0, currentX: 0 };
+  const touch = { active: false, pointerId: null, originX: 0, originY: 0, currentX: 0, currentY: 0 };
 
   const random = (min, max) => min + Math.random() * (max - min);
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
@@ -171,22 +190,16 @@
     oscillator.stop(audio.currentTime + duration);
   }
 
-  function playMusicStep() {
-    const duringSkyTransition = state === "story" && skyTransition;
-    if (!audio || (state !== "playing" && !duringSkyTransition)) return;
-    const melody = [110, 0, 123.47, 110, 82.41, 0, 103.83, 92.5, 110, 146.83, 0, 123.47, 77.78, 82.41, 0, 61.74];
-    const note = melody[musicStep % melody.length];
-    if (note) tone(note, 0.16, 0.012, "square");
-    if (musicStep % 4 === 0) tone((musicStep % 8 === 0 ? 55 : 41.2), 0.28, 0.014, "triangle");
-    if (musicStep % 16 === 15) tone(difficulty.id === "hell" ? 233.08 : 220, 0.06, 0.009, "sawtooth");
-    musicStep += 1;
+  function startMusic() {
+    const playback = soundtrack.play();
+    if (playback) playback.catch(() => {
+      shell.dataset.music = "blocked";
+    });
   }
 
-  function startMusic() {
-    if (musicTimer) return;
-    playMusicStep();
-    musicTimer = window.setInterval(playMusicStep, 235);
-  }
+  soundtrack.addEventListener("playing", () => { shell.dataset.music = "playing"; });
+  soundtrack.addEventListener("pause", () => { shell.dataset.music = "paused"; });
+  soundtrack.addEventListener("error", () => { shell.dataset.music = "error"; });
 
   function setDifficulty(id) {
     difficulty = difficulties[id] || difficulties.normal;
@@ -239,6 +252,9 @@
     hazards = [];
     particles = [];
     skyTransition = null;
+    ropeLength = ROPE_DEFAULT;
+    soundtrack.pause();
+    soundtrack.currentTime = 0;
     player.x = W / 2;
     player.invulnerable = 0;
   }
@@ -381,7 +397,9 @@
     if (state !== "playing") return;
 
     const direction = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
+    const ropeDirection = (keys.up ? 1 : 0) - (keys.down ? 1 : 0);
     player.x = clamp(player.x + direction * player.speed * dt, 10, W - 10);
+    ropeLength = clamp(ropeLength + ropeDirection * 27 * dt, ROPE_MIN, ROPE_MAX);
     player.invulnerable = Math.max(0, player.invulnerable - dt);
     stageTime += dt;
     altitude += dt * (34 + stageIndex * 11);
@@ -397,13 +415,13 @@
       hazard.x += hazard.vx * dt;
       hazard.y += hazard.vy * dt;
       hazard.rotation += hazard.spin * dt;
-      const balloonCluster = {
-        x: player.x,
-        y: player.y - 38,
-        w: Math.max(12, 5 * balloons),
-        h: balloons > 0 ? 30 : 0
-      };
-      if (collision(player, hazard) || (balloons > 0 && collision(balloonCluster, hazard))) {
+      const balloonHit = getBalloonPositions().some((position) => collision({
+        x: position.x,
+        y: position.y,
+        w: 8,
+        h: 12
+      }, hazard));
+      if (collision(player, hazard) || balloonHit) {
         hazard.y = H + 50;
         loseBalloon();
       }
@@ -455,23 +473,25 @@
     ctx.globalAlpha = 1;
   }
 
+  function getBalloonPositions() {
+    return BALLOON_FORMATION.slice(0, balloons).map((offset) => ({
+      x: player.x + offset.x,
+      y: player.y - ropeLength + offset.y
+    }));
+  }
+
   function drawBalloons() {
-    for (let i = 0; i < balloons; i += 1) {
-      const center = i - (balloons - 1) / 2;
-      const spread = Math.min(6.4, 38 / Math.max(1, balloons - 1));
-      const ox = center * spread;
-      const arc = balloons > 1 ? 1 - Math.abs(center) / ((balloons - 1) / 2) : 1;
-      const oy = -43 - arc * 8;
+    getBalloonPositions().forEach((position) => {
       ctx.strokeStyle = "#8f755e";
       ctx.globalAlpha = 0.72;
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(Math.floor(player.x), player.y + 4);
-      ctx.lineTo(Math.floor(player.x + ox), player.y + oy + 7);
+      ctx.lineTo(Math.floor(position.x), Math.floor(position.y + 6));
       ctx.stroke();
       ctx.globalAlpha = 1;
-      drawSprite("balloon", player.x + ox - 4.5, player.y + oy - 5, 9, 14);
-    }
+      drawSprite("balloon", position.x - 4.5, position.y - 7, 9, 14);
+    });
   }
 
   function drawPlayer() {
@@ -607,13 +627,18 @@
     keys[control] = active;
   }
 
-  function updateTouchDirection(clientX) {
+  function updateTouchDirection(clientX, clientY) {
     touch.currentX = clientX;
-    const delta = clamp(clientX - touch.originX, -34, 34);
+    touch.currentY = clientY;
+    const deltaX = clamp(clientX - touch.originX, -34, 34);
+    const deltaY = clamp(clientY - touch.originY, -34, 34);
     const deadzone = 6;
-    setControl("left", delta < -deadzone);
-    setControl("right", delta > deadzone);
-    touchStick.style.setProperty("--stick-x", `${delta * 0.52}px`);
+    setControl("left", deltaX < -deadzone);
+    setControl("right", deltaX > deadzone);
+    setControl("up", deltaY < -deadzone);
+    setControl("down", deltaY > deadzone);
+    touchStick.style.setProperty("--stick-x", `${deltaX * 0.52}px`);
+    touchStick.style.setProperty("--stick-y", `${deltaY * 0.52}px`);
   }
 
   function releaseTouch() {
@@ -621,8 +646,11 @@
     touch.pointerId = null;
     setControl("left", false);
     setControl("right", false);
+    setControl("up", false);
+    setControl("down", false);
     touchStick.classList.remove("is-visible");
     touchStick.style.setProperty("--stick-x", "0px");
+    touchStick.style.setProperty("--stick-y", "0px");
   }
 
   shell.addEventListener("pointerdown", (event) => {
@@ -631,6 +659,8 @@
     touch.active = true;
     touch.pointerId = event.pointerId;
     touch.originX = event.clientX;
+    touch.originY = event.clientY;
+    startMusic();
     const bounds = shell.getBoundingClientRect();
     touchStick.style.left = `${event.clientX - bounds.left}px`;
     touchStick.style.top = `${event.clientY - bounds.top}px`;
@@ -645,7 +675,7 @@
   shell.addEventListener("pointermove", (event) => {
     if (!touch.active || event.pointerId !== touch.pointerId) return;
     event.preventDefault();
-    updateTouchDirection(event.clientX);
+    updateTouchDirection(event.clientX, event.clientY);
   });
 
   ["pointerup", "pointercancel", "lostpointercapture"].forEach((eventName) => {
@@ -657,6 +687,8 @@
   window.addEventListener("keydown", (event) => {
     if (["ArrowLeft", "a", "A"].includes(event.key)) keys.left = true;
     if (["ArrowRight", "d", "D"].includes(event.key)) keys.right = true;
+    if (["ArrowUp", "w", "W"].includes(event.key)) keys.up = true;
+    if (["ArrowDown", "s", "S"].includes(event.key)) keys.down = true;
     if ([" ", "Enter"].includes(event.key) && overlay.classList.contains("is-visible")) continueButton.click();
     if (["p", "P", "Escape"].includes(event.key)) pauseButton.click();
   });
@@ -664,6 +696,8 @@
   window.addEventListener("keyup", (event) => {
     if (["ArrowLeft", "a", "A"].includes(event.key)) keys.left = false;
     if (["ArrowRight", "d", "D"].includes(event.key)) keys.right = false;
+    if (["ArrowUp", "w", "W"].includes(event.key)) keys.up = false;
+    if (["ArrowDown", "s", "S"].includes(event.key)) keys.down = false;
   });
 
   continueButton.addEventListener("click", () => {
@@ -689,11 +723,12 @@
   pauseButton.addEventListener("click", () => {
     if (state === "playing") {
       state = "paused";
-      shell.classList.remove("is-playing");
+      soundtrack.pause();
       pauseButton.textContent = "▶";
       pauseButton.setAttribute("aria-label", "Continuar jogo");
     } else if (state === "paused") {
       state = "playing";
+      startMusic();
       shell.classList.add("is-playing");
       pauseButton.textContent = "Ⅱ";
       pauseButton.setAttribute("aria-label", "Pausar jogo");

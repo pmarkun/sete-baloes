@@ -16,3 +16,5 @@ O projeto usa apenas os quatro canais básicos do NES:
 - `Noise`: passos secos.
 
 `ceu-lavanda-preview.wav` é uma prévia de duas voltas. `ceu-lavanda.nsf` pode ser executado em emuladores e players compatíveis com Nintendo Sound Format.
+
+`ceu-lavanda-game.mp3` é a renderização compacta usada pelo jogo. No navegador ela toca a 78% da velocidade original, com o pitch livre para cair junto e deixar a atmosfera mais pesada.

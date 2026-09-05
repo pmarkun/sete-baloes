@@ -314,7 +314,7 @@ button {
   height: 20px;
   border: 1px solid rgba(233, 223, 203, 0.72);
   background: rgba(154, 134, 173, 0.45);
-  transform: translateX(var(--stick-x, 0));
+  transform: translate(var(--stick-x, 0), var(--stick-y, 0));
 }
 
 button:focus-visible {
