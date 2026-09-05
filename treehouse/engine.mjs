@@ -4,10 +4,10 @@ import { updateNight } from './night.mjs';
 import { thiefPose, pastSelfPose, PORTAL_X, LEDGE_Y } from './temporal.mjs';
 export const WIDTH = 240, HEIGHT = 360;
 export class Game {
-  constructor(index = 0) { this.load(index); }
+  constructor(index = 0, { levels: levelSource = levels } = {}) { this.levels = levelSource; this.load(index); }
   load(index) {
-    this.index = Math.max(0, Math.min(levels.length - 1, index));
-    this.level = structuredClone(levels[this.index]);
+    this.index = Math.max(0, Math.min(this.levels.length - 1, index));
+    this.level = structuredClone(this.levels[this.index]);
     this.player = { ...this.level.spawn, vy: 0, grounded: true, climbing: false, facing: 1, moving: false };
     this.flags = {...this.level.entryFlags}; this.complete = false; this.time = 0;
     this.hunter=null;this.hazardRetry=0;this.lastDark=false;
@@ -103,14 +103,19 @@ export class Game {
     dt = Math.min(dt, 1 / 30); this.time += dt;
     if(this.timer>0){this.timer=Math.max(0,this.timer-dt);if(!this.timer){this.flags.timer=false;this.emit('hatch');}}
     const p = this.player, previousY = p.y;
-    const axis = Number(!!input.right) - Number(!!input.left);
+    const mirrored = !!this.flags.mirror;
+    const axis = mirrored
+      ? Number(!!input.left) - Number(!!input.right)
+      : Number(!!input.right) - Number(!!input.left);
     p.x = Math.max(37, Math.min(203, p.x + axis * 76 * dt));
     p.moving = !!axis;
     if (axis) p.facing = axis;
     const near = this.level.ladders.find(l => Math.abs(p.x - l.x) < 10 && p.y >= l.top - 1 && p.y <= l.bottom + 2);
-    const vertical = Number(!!input.down) - Number(!!input.up);
+    const vertical = mirrored
+      ? Number(!!input.up) - Number(!!input.down)
+      : Number(!!input.down) - Number(!!input.up);
     // A closed ascent gate must never strand someone above it when a timer expires.
-    const canClimb = near && (!near.requires || this.flags[near.requires] || input.down);
+    const canClimb = near && (!near.requires || this.flags[near.requires] || vertical > 0);
     p.climbing = !!(canClimb && (vertical || p.climbing) && !axis);
     if (input.jump && (p.grounded || p.climbing)) { p.vy = -this.level.physics.jumpSpeed; p.grounded = false; p.climbing = false; this.emit('jump'); }
     else if (p.climbing) {
@@ -123,6 +128,11 @@ export class Game {
       if(s){impact(this,p.vy);p.y=s.y;p.vy=0;p.grounded=true;}
     }
     updateObjects(this,dt);
+    const mirror = this.level.objects.find(o => o.type === 'mirror');
+    if (mirror && !this.flags.mirror && Math.abs(p.x - mirror.x) < 16 && p.y > mirror.y - 38 && p.y < mirror.y + 4) {
+      this.flags.mirror = true;
+      this.emit('mirror');
+    }
     for (const o of this.level.objects) if (['key','seed','crystal','lantern'].includes(o.type) && !o.suspended && !o.collected && Math.abs(p.x - o.x) < 13 && Math.abs(p.y - 12 - o.y) < 16) {
       o.collected = true; this.emit('key');
       if(o.type==='crystal'){this.flags.crystalCount=(this.flags.crystalCount||0)+1;this.flags.crystals=this.flags.crystalCount===3;}

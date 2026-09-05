@@ -1,3 +1,19 @@
+# Validação mais recente — fase do espelho e proporção do canvas
+
+## Editor visual de fases — 5 de setembro de 2026
+
+42 testes aprovados, incluindo catálogo, limites 240 × 360, referências de flags, round-trip JSON, duplicação de fases, validação das fases oficiais e execução de uma fase customizada pelo `Game`. Chrome DevTools conferido em 1366 × 768 e 1440 × 900: layout em três colunas, sem overflow horizontal, aviso desktop oculto acima de 1000 px e canvas 2:3 preservado. Em largura de 900 px, o aviso aparece e o editor mantém o conteúdo acessível.
+
+Interações conferidas: adicionar por clique, arrastar da paleta para o canvas, seleção, edição de coordenada no inspetor, exclusão por Delete, desfazer/refazer, duplicação da fase 13, persistência local após reload, abertura da prévia e conclusão de uma fase mínima. A prévia usou `Game` com fonte em memória e exibiu “Prévia concluída” sem gravar progresso oficial. Console sem erros; preview sem overflow em 1366 × 768 e 1440 × 900.
+
+Limitações: importação via seletor de arquivo e teste físico em MacBook não foram repetidos nesta rodada; o teste de importação inválida e round-trip está coberto no módulo do editor. Firefox, WebKit e dispositivos móveis permanecem fora do escopo do editor desktop.
+
+35 testes aprovados. O novo andar 13 é fisicamente alcançável; tocar o espelho inverte a paleta do mundo, troca direita/esquerda e cima/baixo, emite um evento sonoro único e exige a flag para abrir a saída. A fase leva corretamente à copa como último andar.
+
+O canvas agora usa `object-fit: contain`, preservando a proporção 2:3 dentro do espaço disponível e evitando o achatamento observado em telas altas de MacBook. Chrome conectado foi conferido em 390×844, 768×1024, 1366×768 e 1440×900: sem rolagem horizontal, controles visíveis e alvos de pelo menos 44 px; a imagem da fase 13 foi inspecionada no tamanho de MacBook.
+
+Limitações desta rodada: a emulação foi feita no Chrome, não em um MacBook físico; Firefox, WebKit, Safari/iOS/Android físicos e toque longo real não foram repetidos. A proporção interna foi validada visualmente e pela regra CSS `contain`; a caixa externa do elemento canvas continua ocupando o mundo inteiro por design.
+
 # Validação do MVP — 5 de setembro de 2026
 
 ## Expansão atual: andares 11 e 12

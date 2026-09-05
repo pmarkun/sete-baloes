@@ -10,9 +10,9 @@ const extras = {
 };
 const character = {idle:[.105,.12,.19,.68],walk:[.395,.13,.23,.67],climb:[.70,.16,.21,.66]};
 const night = {hunter:[.03,.10,.31,.79],hunterWalk:[.375,.12,.415,.76],lantern:[.84,.56,.125,.33]};
-export async function loadArt() {
+export async function loadArt(assetBase='assets') {
   const images = await Promise.all(['tree-outward','sprites','canopy','time-objects-alpha','character-owl','night-objects'].map(name => new Promise((resolve, reject) => {
-    const img = new Image(); img.onload = () => resolve(img); img.onerror = () => reject(new Error(`Arte indisponível: ${name}`)); img.src = `assets/${name}.png`;
+    const img = new Image(); img.onload = () => resolve(img); img.onerror = () => reject(new Error(`Arte indisponível: ${name}`)); img.src = `${assetBase}/${name}.png`;
   })));
   return { background: images[0], sprites: images[1], canopy: images[2], extras:images[3], character:images[4],night:images[5] };
 }
@@ -29,6 +29,7 @@ export function renderFinale(ctx, art, pose) {
 export function render(ctx, game, art, {reducedMotion=false}={}) {
   ctx.imageSmoothingEnabled = false;
   ctx.save();
+  if(game.flags.mirror)ctx.filter='invert(1)';
   if(game.shake&&!reducedMotion){ctx.fillStyle='#291c20';ctx.fillRect(0,0,240,360);ctx.translate(Math.round(Math.sin(game.time*93)*game.shake*11),Math.round(Math.cos(game.time*77)*game.shake*8));}
   ctx.drawImage(art.background, 0, 0, 240, 360);
   const sprite = (name,x,y,w,h,flip=false) => {
@@ -67,6 +68,15 @@ export function render(ctx, game, art, {reducedMotion=false}={}) {
     if(o.type==='seed'&&!o.collected)sprite('pot',o.x-4,o.y-5,8,10);
     if(o.type==='crystal'&&!o.collected)sprite('crystal',o.x-5,o.y-11,10,20);
     if(o.type==='cloak'&&!o.collected)sprite('cloak',o.x-10,o.y-28,20,28);
+    if(o.type==='mirror'){
+      ctx.save();
+      ctx.fillStyle='#6b4146';ctx.fillRect(o.x-13,o.y-43,26,43);
+      ctx.fillStyle='#b7d8d5';ctx.fillRect(o.x-9,o.y-38,18,31);
+      ctx.strokeStyle='#f4d9a4';ctx.lineWidth=1;ctx.strokeRect(o.x-10,o.y-39,20,33);
+      ctx.strokeStyle='#ffffff99';ctx.beginPath();ctx.moveTo(o.x-6,o.y-34);ctx.lineTo(o.x+5,o.y-23);ctx.stroke();
+      ctx.fillStyle='#422733';ctx.fillRect(o.x-16,o.y-3,32,4);
+      ctx.restore();
+    }
   }
   if(game.level.falseExit){const e=game.level.falseExit;sprite('door',e.x-10,e.y-30,20,30);label('SAÍDA',e.x,e.y-35,'#b7d895');}
   if(game.level.portal&&(game.inPast||game.ghost||(game.flags.cloak&&!game.flags.timeKey))){const p=game.level.portal;sprite('portal',p.x-14,p.y-39,28,40);}

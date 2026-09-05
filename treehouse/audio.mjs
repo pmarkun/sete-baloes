@@ -79,6 +79,7 @@ export class Soundscape {
     else if(type==='powerOff')this.tone(50,.24,.09,'triangle',now,-18);
     else if(type==='powerOn')this.tone(42,.18,.08,'triangle',now,12);
     else if(type==='grow'){[60,64,67,72,76].forEach((n,i)=>this.tone(n,.22,.10,'triangle',now+i*.08));}
+    else if(type==='mirror'){[84,72,88,76].forEach((n,i)=>this.tone(n,.18,.11,'sine',now+i*.09));}
     else if(type==='victory'){[72,76,79,84].forEach((n,i)=>this.tone(n,.7,.14,'triangle',now+i*.16));}
     else {this.tone(79,.15,.1,'sine');this.tone(84,.26,.08,'sine',now+.1);}
   }

@@ -22,7 +22,9 @@ try {
   if(Number.isInteger(previousEnding)&&previousEnding>0&&previousEnding<levels.length)saved=Math.max(saved,previousEnding);
 } catch {}
 if(preview&&!previewFinale){saved=previewFloor-1;savedVictory=false;}
-const game = new Game(saved), canvas=$('canvas'), ctx=canvas.getContext('2d');
+const game = new Game(saved), canvas=$('canvas'), ctx=canvas.getContext('2d'), world=$('.world');
+function fitCanvas(){const width=Math.floor(Math.min(world.clientWidth,world.clientHeight*2/3));canvas.style.width=`${width}px`;canvas.style.height=`${Math.floor(width*3/2)}px`;}
+fitCanvas();window.addEventListener('resize',fitCanvas);window.visualViewport?.addEventListener('resize',fitCanvas);
 const sound=new Soundscape();
 function soundButton(){ $('#sound').textContent=sound.enabled?'♪':'♪×';$('#sound').setAttribute('aria-pressed',String(sound.enabled));$('#sound').setAttribute('aria-label',sound.enabled?'Silenciar música e efeitos':'Ativar música e efeitos'); }
 function unlockSound(){sound.unlock().then(()=>{$('#sound').dataset.state=sound.context?.state||'unavailable';}).catch(()=>{$('#sound').dataset.state='blocked';});}
@@ -41,7 +43,13 @@ function resetCompletedRun(){
 // Both routes back to the menu prepare a fresh game after a completed run.
 $('header a').addEventListener('click',resetCompletedRun);
 for(const type of ['contextmenu','selectstart'])$('.shell').addEventListener(type,e=>e.preventDefault());
-function hud(){ $('#floor').textContent=`${String(game.index+1).padStart(2,'0')} / ${String(levels.length).padStart(2,'0')}${game.inPast?'':` · ${game.level.name}`}`;$('#hint').hidden=true; }
+function hud(){
+  $('#floor').textContent=`${String(game.index+1).padStart(2,'0')} / ${String(levels.length).padStart(2,'0')}${game.inPast?'':` · ${game.level.name}`}`;
+  const mirrored=!!game.flags.mirror;
+  $('#hint').textContent=mirrored?'O espelho virou tudo: direita ↔ esquerda · cima ↔ baixo.':' ';
+  $('#hint').hidden=!mirrored;
+  $('.controls').classList.toggle('mirrored',mirrored);
+}
 function overlay(title,copy,button){clearInput();$('#overlay').hidden=false;$('#overlay-title').textContent=title;$('#overlay-copy').textContent=copy;$('#continue').textContent=button;$('#restart').hidden=false;$('#overlay-number').textContent=`${String(game.index+1).padStart(2,'0')} / ${String(levels.length).padStart(2,'0')} · ${game.level.name}`;}
 function start(nextMode='playing'){unlockSound();mode=nextMode;$('#overlay').hidden=true;document.activeElement?.blur();$('#pause').textContent='Ⅱ';$('#pause').setAttribute('aria-label','Pausar jogo');clearInput();}
 function pause(){if(mode==='playing'||mode==='finale'){pausedMode=mode;mode='paused';overlay('Uma pausa no galho.','A árvore espera por você.','CONTINUAR');if(pausedMode==='finale')$('#restart').hidden=true;$('#pause').textContent='▶';$('#pause').setAttribute('aria-label','Continuar jogo');}else if(mode==='paused')start(pausedMode);}
@@ -84,4 +92,4 @@ sound.setScene(mode==='finale'||mode==='won'?null:game.level.music);sound.setAct
 if(art){if(mode==='finale'||mode==='won'||(mode==='paused'&&pausedMode==='finale'))renderFinale(ctx,art,finalePose(finaleElapsed,reducedMotion.matches));else render(ctx,game,art,{reducedMotion:reducedMotion.matches});}
 requestAnimationFrame(frame);}
 hud();
-loadArt().then(a=>{art=a;$('#continue').disabled=false;$('#continue').textContent=saved?'CONTINUAR SUBIDA':'COMEÇAR A SUBIDA';if(saved)$('#restart').hidden=false;if(previewFinale||savedVictory)beginFinale(savedVictory&&!previewFinale);requestAnimationFrame(frame);}).catch(error=>{$('#overlay-title').textContent='A arte não carregou.';$('#overlay-copy').textContent='Confira a conexão e recarregue a página.';console.error(error);});
+loadArt().then(a=>{art=a;fitCanvas();$('#continue').disabled=false;$('#continue').textContent=saved?'CONTINUAR SUBIDA':'COMEÇAR A SUBIDA';if(saved)$('#restart').hidden=false;if(previewFinale||savedVictory)beginFinale(savedVictory&&!previewFinale);requestAnimationFrame(frame);}).catch(error=>{$('#overlay-title').textContent='A arte não carregou.';$('#overlay-copy').textContent='Confira a conexão e recarregue a página.';console.error(error);});

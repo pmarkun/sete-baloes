@@ -54,9 +54,21 @@ test('expired timed hatch can be descended and reopened, without a softlock',()=
   const g=new Game(9);climb(g,175,250);climb(g,65,160);walk(g,110);action(g);climb(g,175,70);
   tick(g,{},800);assert.equal(g.flags.timer,false);climb(g,175,160);walk(g,110);action(g);assert.ok(g.flags.timer);
 });
-test('only floor 12 leads to the canopy now',()=>{
-  assert.equal(levels.length,12);assert.equal(destinationAfterExit(4,levels.length),'complete');
-  assert.equal(destinationAfterExit(9,levels.length),'complete');assert.equal(destinationAfterExit(11,levels.length),'finale');
+test('mirror floor reverses both axes and is the new final floor',()=>{
+  const g=new Game(12);climb(g,175,250);
+  while(!g.flags.mirror)tick(g,{left:true});
+  assert.deepEqual(g.drainEvents().map(e=>e.type),['mirror']);
+  const x=g.player.x;tick(g,{right:true},10);assert.ok(g.player.x<x,'right moves left after touching the mirror');
+  while(Math.abs(g.player.x-65)>1.3)tick(g,{right:true});
+  while(Math.abs(g.player.y-160)>.1)tick(g,{down:true});
+  while(Math.abs(g.player.x-175)>1.3)tick(g,{left:true});
+  while(Math.abs(g.player.y-70)>.1)tick(g,{down:true});
+  while(Math.abs(g.player.x-115)>1.3)tick(g,{right:true});
+  g.interact();assert.ok(g.complete);
+});
+test('only the new mirror floor leads to the canopy now',()=>{
+  assert.equal(levels.length,13);assert.equal(destinationAfterExit(4,levels.length),'complete');
+  assert.equal(destinationAfterExit(11,levels.length),'complete');assert.equal(destinationAfterExit(12,levels.length),'finale');
 });
 test('accepted jumps and an opened hatch emit their distinct sound events',()=>{
   const g=new Game(3);tick(g,{jump:true});assert.ok(g.drainEvents().some(e=>e.type==='jump'));

@@ -1,8 +1,8 @@
 # Biblioteca da Casa na Árvore
 
-Cada andar tem seu próprio arquivo em `levels/01-first-branches.mjs` até `levels/12-night-watch.mjs`. `levels/index.mjs` registra a ordem; `levels.mjs` mantém o ponto de importação. `components.mjs` fornece as fábricas reutilizáveis. `physics.mjs` compartilha gravidade, colisões, objetos em queda e impactos. `engine.mjs` controla física e puzzles sem DOM. `render.mjs` usa o atlas e o fundo. `app.mjs` liga teclado, ponteiros, pausa, progressão e armazenamento à interface HTML.
+Cada andar tem seu próprio arquivo em `levels/01-first-branches.mjs` até `levels/13-mirror.mjs`. `levels/index.mjs` registra a ordem; `levels.mjs` mantém o ponto de importação. `components.mjs` fornece as fábricas reutilizáveis. `physics.mjs` compartilha gravidade, colisões, objetos em queda e impactos. `engine.mjs` controla física e puzzles sem DOM. `render.mjs` usa o atlas e o fundo. `app.mjs` liga teclado, ponteiros, pausa, progressão e armazenamento à interface HTML.
 
-Ao sair do último andar (atualmente o décimo segundo), `finale.mjs` conduz a cena da copa: a menina repousa sobre as folhas por 2,5 segundos, sobe ao céu e recebe a mensagem de vitória aos 6 segundos. A vitória permanece salva neste navegador, inclusive após recarregar; voltar ao menu pelo botão de vitória ou pelo cabeçalho limpa a fase salva e a marca de vitória. A próxima entrada começa no primeiro andar. A tela de vitória permanece até essa saída explícita. Com redução de movimento, a cena fica estática e a mensagem aparece no mesmo intervalo.
+Ao sair do último andar (atualmente o décimo terceiro), `finale.mjs` conduz a cena da copa: a menina repousa sobre as folhas por 2,5 segundos, sobe ao céu e recebe a mensagem de vitória aos 6 segundos. A vitória permanece salva neste navegador, inclusive após recarregar; voltar ao menu pelo botão de vitória ou pelo cabeçalho limpa a fase salva e a marca de vitória. A próxima entrada começa no primeiro andar. A tela de vitória permanece até essa saída explícita. Com redução de movimento, a cena fica estática e a mensagem aparece no mesmo intervalo.
 
 Para inspecionar a animação sem jogar nem alterar o progresso salvo, abra `?finale=1`. Verifique a lógica com `node treehouse/finale.test.mjs`.
 
@@ -21,14 +21,21 @@ Para inspecionar a animação sem jogar nem alterar o progresso salvo, abra `?fi
 | `object('seed', x, y)` / `object('pot', x, y)` | Coleta da semente e plantio por AÇÃO ativam `grown`; uma escada com `vine: true` aparece. |
 | `object('cloak', x, y)` | AÇÃO veste a skin de rosto coberto e torna o portal disponível. |
 | `object('crystal', x, y)` | Coletável. Três cristais ativam `crystals`. |
+| `object('mirror', x, y)` | Ao tocar, ativa `mirror`: a paleta do mundo é invertida e os quatro controles direcionais trocam de sentido. |
 | `portal: {x,y}` | AÇÃO entra no passado quando há manto; no passado, exige a chave para retornar. |
 | `falseExit: {x,y}` / `object('exitKey', x, y)` | Porta SAÍDA narrativa; chave retirada pela figura do futuro na primeira visita, coletada com AÇÃO no retorno. |
 
 Mundo lógico: 240 × 360. Origem no canto superior esquerdo, y aumenta para baixo. A posição da menina corresponde ao centro horizontal e à base dos pés. Plataformas e escadas devem formar rotas alcançáveis; o salto normal sobe cerca de 35 unidades, o lunar cerca de 63 e o pesado cerca de 21. A física usa passos limitados a 1/30 s.
 
-Para adicionar um andar, crie um arquivo em `levels/` exportando um objeto baseado em `base()`, com `name`, `spawn`, `platforms`, `ladders`, `objects` e `door`. Registre o import em `levels/index.mjs`. Não adicione `hint`: as pistas devem estar nos objetos, sons e suas reações. Use flags distintas para mecanismos independentes. Inclua um teste de percurso que caminhe, pule e escale até a saída; não teletransporte a personagem no teste de resolução. O inventário reinicia entre andares.
+Para adicionar um andar oficial, crie um arquivo em `levels/` exportando um objeto baseado em `base()`, com `name`, `spawn`, `platforms`, `ladders`, `objects` e `door`. Registre o import em `levels/index.mjs`. Não adicione `hint`: as pistas devem estar nos objetos, sons e suas reações. Use flags distintas para mecanismos independentes. Inclua um teste de percurso que caminhe, pule e escale até a saída; não teletransporte a personagem no teste de resolução. O inventário reinicia entre andares.
 
-Limites do MVP: uma chave comum por andar; sem editor visual. Algumas flags e regras dos novos puzzles (`weight`, `song`, três cristais) são convencionais e documentadas acima. O contador acompanha a lista de fases; os textos narrativos descrevem doze andares.
+## Editor de fases
+
+Abra [`/treehouse/editor/`](editor/) no desktop. O editor usa a mesma biblioteca de componentes e o mesmo renderer do jogo, com mundo de 240 × 360, grade de 5 unidades, paleta arrastável, inspetor, desfazer/refazer, rascunhos em `localStorage` e importação/exportação do `LevelDocument` JSON versionado. A prévia em [`play.html`](editor/play.html) roda a fase em memória e não altera o progresso oficial.
+
+O documento exportado tem `schemaVersion: 1` e preserva `name`, `spawn`, `physics`, `platforms`, `ladders`, `objects`, `door` e elementos opcionais como `hatch`, `portal`, `falseExit`, `lighting`, `hunter`, `paradox`, `melody`, `music` e `entryFlags`. Erros estruturais impedem exportação e prévia; avisos de rota incompleta ficam visíveis no inspetor.
+
+Limites do MVP: uma chave comum por andar; o editor tem seleção simples, sem seleção múltipla ou redimensionamento direto no canvas. Algumas flags e regras dos novos puzzles (`weight`, `song`, três cristais e `mirror`) são convencionais e documentadas acima. O contador acompanha a lista de fases; os textos narrativos descrevem treze andares.
 
 ## Paradoxo temporal
 
