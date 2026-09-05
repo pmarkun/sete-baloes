@@ -1,0 +1,22 @@
+{
+  "ok": true,
+  "kind": "sprite-gen-score-report",
+  "source_report": "/home/markun/Documents/Lambes/game/assets/generated/sprites/peace-dove",
+  "overall_score": 97.0,
+  "candidate_rank": 399,
+  "rows": [
+    {
+      "state": "fly",
+      "score": 97.0,
+      "candidate_rank": 399,
+      "expected_frames": 4,
+      "found_frames": 4,
+      "errors": [],
+      "warnings": [
+        "fly: native logical exceeds the physical cap 32x29 — capped frames (reroll candidates): 0:47x49, 1:47x49, 2:45x49, 3:45x50"
+      ],
+      "hints": []
+    }
+  ],
+  "hints": []
+}

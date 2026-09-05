@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "kind": "sprite-gen-request",
+  "engine": "component-row",
+  "character": {
+    "id": "peace-dove",
+    "description": "white peace dove in right-facing side view holding a tiny crimson balloon by the beak",
+    "base_image": "base-source.png"
+  },
+  "cell": {
+    "shape": "square",
+    "width": 64,
+    "height": 64,
+    "safe_margin_x": 6,
+    "safe_margin_y": 6,
+    "size": 64,
+    "safe_margin": 6
+  },
+  "chroma_key": {
+    "name": "green",
+    "hex": "#00FF00",
+    "rgb": [
+      0,
+      255,
+      0
+    ],
+    "selection": "manual"
+  },
+  "states": {
+    "fly": {
+      "frames": 4,
+      "fps": 7,
+      "loop": true,
+      "action": "readable wing-flap cycle: wings raised, mid-downstroke, wings lowered, mid-upstroke; the tiny balloon remains tied at the beak and floats consistently above the dove"
+    }
+  },
+  "style": "true low-resolution eerie 16-bit pixel art, hard edges, limited bone lavender ink crimson palette",
+  "motion_phase_guides": false,
+  "layout": "taxonomy/v1",
+  "fit": {
+    "resample": "kcentroid",
+    "align_x": "alpha-centroid",
+    "align_y": "center",
+    "ground_frames": false,
+    "pixel_unfake": true,
+    "logical_height": 32,
+    "palette_size": 12,
+    "outline": true
+  },
+  "chroma": {
+    "mode": "rgb",
+    "unmix_reach": 4,
+    "spill_max_fraction": 0.005
+  }
+}

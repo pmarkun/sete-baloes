@@ -17,14 +17,35 @@
   const difficultyButtons = [...document.querySelectorAll("[data-difficulty]")];
   const pauseButton = document.querySelector("#pause-button");
   const monochromeButton = document.querySelector("#monochrome-button");
+  const doveInventoryButton = document.querySelector("#dove-inventory");
+  const doveInventoryIcon = document.querySelector("#dove-inventory-icon");
+  const doveInventoryCtx = doveInventoryIcon.getContext("2d");
+  const doveCountEl = document.querySelector("#dove-count");
   const touchStick = document.querySelector("#touch-stick");
 
   ctx.imageSmoothingEnabled = false;
+  doveInventoryCtx.imageSmoothingEnabled = false;
 
   const atlas = new Image();
   atlas.src = "assets/sprite-atlas-v2.png";
   const luciferSprite = new Image();
   luciferSprite.src = "assets/lucifer.png";
+  const doveAtlas = new Image();
+  doveAtlas.src = "assets/generated/sprites/peace-dove/sprite-sheet-alpha.png";
+  let doveFrames = [];
+  let doveDurations = [143, 143, 143, 143];
+  fetch("assets/generated/sprites/peace-dove/manifest.json")
+    .then((response) => {
+      if (!response.ok) throw new Error(`dove manifest ${response.status}`);
+      return response.json();
+    })
+    .then((manifest) => {
+      doveFrames = manifest.frame_layout.rows.fly;
+      doveDurations = manifest.animation.rows.fly.durations_ms;
+      shell.dataset.doveAsset = "ready";
+      updateInventoryUI();
+    })
+    .catch(() => { shell.dataset.doveAsset = "error"; });
   const soundtrack = new Audio("music/ceu-lavanda-game.mp3");
   soundtrack.loop = true;
   soundtrack.preload = "auto";
@@ -140,6 +161,12 @@
   let balloons = MAX_BALLOONS;
   let altitude = 0;
   let hazards = [];
+  let peaceDoves = [];
+  let doveInventory = 0;
+  let doveSpawnTimer = Infinity;
+  let doveSpawnedStages = new Set();
+  let doveAttack = null;
+  let peaceFlash = 0;
   let particles = [];
   let stars = [];
   let lastTime = performance.now();
@@ -223,6 +250,43 @@
     ctx.restore();
   }
 
+  function doveFrameAt(elapsedMs) {
+    if (!doveFrames.length) return null;
+    const cycle = doveDurations.reduce((sum, duration) => sum + duration, 0);
+    let cursor = ((elapsedMs % cycle) + cycle) % cycle;
+    for (let index = 0; index < doveDurations.length; index += 1) {
+      if (cursor < doveDurations[index]) return doveFrames[index];
+      cursor -= doveDurations[index];
+    }
+    return doveFrames[0];
+  }
+
+  function drawDove(target, x, y, width, height, flip = false, rotation = 0, alpha = 1) {
+    const source = doveFrameAt(performance.now());
+    if (!source || !doveAtlas.complete || doveAtlas.naturalWidth === 0) return;
+    target.save();
+    target.globalAlpha = alpha;
+    target.translate(Math.floor(x + width / 2), Math.floor(y + height / 2));
+    target.rotate(rotation);
+    if (flip) target.scale(-1, 1);
+    target.drawImage(doveAtlas, source.x, source.y, source.w, source.h, -width / 2, -height / 2, width, height);
+    target.restore();
+  }
+
+  function updateInventoryUI() {
+    const available = doveInventory > 0;
+    doveInventoryButton.hidden = !available;
+    doveInventoryButton.disabled = !available || Boolean(doveAttack) || state !== "playing";
+    doveCountEl.textContent = String(doveInventory);
+    doveInventoryButton.setAttribute(
+      "aria-label",
+      available ? `Usar pomba da paz, ${doveInventory} ${doveInventory === 1 ? "disponível" : "disponíveis"}` : "Pomba da paz indisponível"
+    );
+    shell.dataset.doveInventory = String(doveInventory);
+    doveInventoryCtx.clearRect(0, 0, 32, 32);
+    if (available) drawDove(doveInventoryCtx, 1, 1, 30, 30);
+  }
+
   function showStory(story, action, buttonText = "CONTINUAR") {
     state = "story";
     currentStoryAction = action;
@@ -250,6 +314,12 @@
     balloons = MAX_BALLOONS;
     altitude = 0;
     hazards = [];
+    peaceDoves = [];
+    doveInventory = 0;
+    doveSpawnTimer = Infinity;
+    doveSpawnedStages = new Set();
+    doveAttack = null;
+    peaceFlash = 0;
     particles = [];
     skyTransition = null;
     ropeLength = ROPE_DEFAULT;
@@ -257,6 +327,7 @@
     soundtrack.currentTime = 0;
     player.x = W / 2;
     player.invulnerable = 0;
+    updateInventoryUI();
   }
 
   function beginStage() {
@@ -264,11 +335,15 @@
     stageTime = 0;
     spawnTimer = 0.7;
     hazards = [];
+    peaceDoves = [];
+    doveAttack = null;
+    doveSpawnTimer = stageIndex < 2 && !doveSpawnedStages.has(stageIndex) ? random(5.5, 9) : Infinity;
     player.invulnerable = Math.min(1.5, difficulty.invulnerability);
     skyTransition = null;
     hideStory();
     tone(110 + stageIndex * 18, 0.35, 0.025, "sine");
     startMusic();
+    updateInventoryUI();
   }
 
   function advanceStory() {
@@ -322,6 +397,74 @@
     });
   }
 
+  function spawnPeaceDove() {
+    if (stageIndex > 1 || doveSpawnedStages.has(stageIndex)) return;
+    doveSpawnedStages.add(stageIndex);
+    const drift = random(-3.5, 3.5);
+    peaceDoves.push({
+      x: clamp(player.x - 14 + random(-8, 8), 8, W - 36),
+      y: -30,
+      w: 28,
+      h: 28,
+      vx: drift,
+      vy: random(19, 24),
+      phase: random(0, Math.PI * 2),
+      flip: drift < 0
+    });
+    shell.dataset.doveSpawned = String(stageIndex);
+  }
+
+  function collectPeaceDove(dove) {
+    doveInventory += 1;
+    dove.y = H + 80;
+    tone(523.25, 0.16, 0.04, "sine");
+    setTimeout(() => tone(783.99, 0.24, 0.03, "sine"), 80);
+    for (let i = 0; i < 10; i += 1) {
+      particles.push({
+        x: player.x + random(-8, 8),
+        y: player.y + random(-8, 8),
+        vx: random(-18, 18),
+        vy: random(-28, -8),
+        life: random(0.45, 0.8),
+        color: Math.random() > 0.35 ? "#e9dfcb" : "#d6a84b"
+      });
+    }
+    updateInventoryUI();
+  }
+
+  function usePeaceDove() {
+    if (state !== "playing" || doveInventory <= 0 || doveAttack) return;
+    doveInventory -= 1;
+    doveAttack = { elapsed: 0, duration: 2.2, cleared: false, x: player.x, y: player.y - 18, trail: [] };
+    shell.dataset.doveAttack = "spiral";
+    tone(392, 0.26, 0.035, "triangle");
+    updateInventoryUI();
+  }
+
+  function clearVisibleHazards() {
+    const visible = hazards.filter((hazard) => (
+      hazard.x + hazard.w >= 0 && hazard.x <= W && hazard.y + hazard.h >= 0 && hazard.y <= H
+    ));
+    const visibleSet = new Set(visible);
+    hazards = hazards.filter((hazard) => !visibleSet.has(hazard));
+    visible.forEach((hazard) => {
+      for (let i = 0; i < 5; i += 1) {
+        particles.push({
+          x: hazard.x + hazard.w / 2 + random(-5, 5),
+          y: hazard.y + hazard.h / 2 + random(-4, 4),
+          vx: random(-30, 30),
+          vy: random(-34, -10),
+          life: random(0.45, 0.85),
+          color: Math.random() > 0.25 ? "#e9dfcb" : "#9a86ad"
+        });
+      }
+    });
+    peaceFlash = 0.32;
+    shell.dataset.doveCleared = String(visible.length);
+    tone(261.63, 0.55, 0.04, "sine");
+    if (navigator.vibrate && visible.length) navigator.vibrate([25, 20, 25]);
+  }
+
   function collision(a, b) {
     const inset = 3;
     return a.x - a.w / 2 + inset < b.x + b.w - inset &&
@@ -363,6 +506,9 @@
     const previousStage = stageIndex;
     stageIndex += 1;
     hazards = [];
+    peaceDoves = [];
+    doveAttack = null;
+    updateInventoryUI();
     skyTransition = { from: previousStage, to: stageIndex, elapsed: 0, duration: 3.2 };
     if (stageIndex >= stages.length) {
       showStory(finaleStory, "show-finale");
@@ -388,6 +534,7 @@
       particle.life -= dt;
       return particle.life > 0;
     });
+    peaceFlash = Math.max(0, peaceFlash - dt);
 
     if (state === "story" && skyTransition) {
       skyTransition.elapsed = Math.min(skyTransition.duration, skyTransition.elapsed + dt);
@@ -404,6 +551,12 @@
     stageTime += dt;
     altitude += dt * (34 + stageIndex * 11);
     spawnTimer -= dt;
+    doveSpawnTimer -= dt;
+
+    if (doveSpawnTimer <= 0) {
+      spawnPeaceDove();
+      doveSpawnTimer = Infinity;
+    }
 
     if (spawnTimer <= 0) {
       spawnHazard();
@@ -427,6 +580,40 @@
       }
     });
     hazards = hazards.filter((hazard) => hazard.y < H + 35 && hazard.x > -55 && hazard.x < W + 55);
+
+    peaceDoves.forEach((dove) => {
+      dove.phase += dt * 2.7;
+      dove.x += dove.vx * dt + Math.sin(dove.phase) * 5 * dt;
+      dove.y += dove.vy * dt;
+      const balloonPickup = getBalloonPositions().some((position) => collision({
+        x: position.x,
+        y: position.y,
+        w: 10,
+        h: 14
+      }, dove));
+      if (collision(player, dove) || balloonPickup) collectPeaceDove(dove);
+    });
+    peaceDoves = peaceDoves.filter((dove) => dove.y < H + 40 && dove.x > -45 && dove.x < W + 45);
+
+    if (doveAttack) {
+      doveAttack.elapsed += dt;
+      const progress = Math.min(1, doveAttack.elapsed / doveAttack.duration);
+      const angle = -Math.PI / 2 + progress * Math.PI * 5;
+      const radius = progress * 76;
+      doveAttack.x = clamp(mix(player.x, W / 2, progress) + Math.cos(angle) * radius, 18, W - 18);
+      doveAttack.y = clamp(mix(player.y - 18, H / 2, progress) + Math.sin(angle) * radius * 0.68, 18, H - 18);
+      doveAttack.trail.push({ x: doveAttack.x, y: doveAttack.y });
+      if (doveAttack.trail.length > 24) doveAttack.trail.shift();
+      if (!doveAttack.cleared && doveAttack.elapsed >= 0.9) {
+        doveAttack.cleared = true;
+        clearVisibleHazards();
+      }
+      if (progress >= 1) {
+        doveAttack = null;
+        shell.dataset.doveAttack = "idle";
+        updateInventoryUI();
+      }
+    }
 
     if (stageTime >= stages[stageIndex].duration) finishStage();
   }
@@ -510,12 +697,40 @@
     });
   }
 
+  function drawPeaceDoves() {
+    peaceDoves.forEach((dove) => {
+      const bob = Math.sin(dove.phase * 2) * 1.5;
+      drawDove(ctx, dove.x, dove.y + bob, dove.w, dove.h, dove.flip);
+    });
+  }
+
+  function drawDoveAttack() {
+    if (!doveAttack) return;
+    const angle = doveAttack.elapsed * 9;
+    const fade = doveAttack.elapsed > 1.8 ? Math.max(0, (2.2 - doveAttack.elapsed) / 0.4) : 1;
+    doveAttack.trail.forEach((point, index) => {
+      ctx.globalAlpha = (index / doveAttack.trail.length) * 0.42 * fade;
+      ctx.fillStyle = index % 3 === 0 ? "#d6a84b" : "#e9dfcb";
+      ctx.fillRect(Math.floor(point.x), Math.floor(point.y), index % 4 === 0 ? 2 : 1, 1);
+    });
+    ctx.globalAlpha = 1;
+    drawDove(ctx, doveAttack.x - 20, doveAttack.y - 20, 40, 40, Math.cos(angle) < 0, angle * 0.08, fade);
+  }
+
   function drawParticles() {
     particles.forEach((particle) => {
       ctx.globalAlpha = Math.max(0, particle.life);
       ctx.fillStyle = particle.color;
       ctx.fillRect(Math.floor(particle.x), Math.floor(particle.y), 2, 2);
     });
+    ctx.globalAlpha = 1;
+  }
+
+  function drawPeaceFlash() {
+    if (peaceFlash <= 0) return;
+    ctx.globalAlpha = peaceFlash * 1.7;
+    ctx.fillStyle = "#e9dfcb";
+    ctx.fillRect(0, 0, W, H);
     ctx.globalAlpha = 1;
   }
 
@@ -597,9 +812,13 @@
       return;
     }
     drawHazards();
+    drawPeaceDoves();
+    drawDoveAttack();
     drawPlayer();
     drawParticles();
+    drawPeaceFlash();
     if (state === "playing" || state === "paused" || state === "story") drawHud();
+    if (doveInventory > 0) updateInventoryUI();
 
     if (state === "paused") {
       ctx.fillStyle = "rgba(8,7,13,0.76)";
@@ -720,6 +939,11 @@
     window.localStorage.setItem("sete-baloes-monochrome", enabled ? "1" : "0");
   });
 
+  doveInventoryButton.addEventListener("click", (event) => {
+    event.stopPropagation();
+    usePeaceDove();
+  });
+
   pauseButton.addEventListener("click", () => {
     if (state === "playing") {
       state = "paused";
@@ -762,6 +986,8 @@
     monochromeButton.setAttribute("aria-label", "P&B — desativar modo preto e branco");
   }
   const stageParam = urlParams.get("stage");
+  const doveParam = urlParams.get("dove");
+  const inventoryParam = Number(urlParams.get("inventory"));
   const transitionParam = urlParams.get("transition");
   const previewStage = stageParam === null ? Number.NaN : Number(stageParam);
   const previewTransition = transitionParam === null ? Number.NaN : Number(transitionParam);
@@ -783,5 +1009,10 @@
     overlay.classList.remove("is-visible");
     shell.classList.remove("is-playing");
   }
+  if (Number.isInteger(inventoryParam) && inventoryParam > 0) {
+    doveInventory = clamp(inventoryParam, 1, 9);
+    updateInventoryUI();
+  }
+  if (doveParam === "1" && stageIndex < 2 && state === "playing") doveSpawnTimer = 0.15;
   requestAnimationFrame(frame);
 })();

@@ -1,0 +1,53 @@
+{
+  "ok": true,
+  "engine": "component-row",
+  "kind": "sprite-gen-inspect-report",
+  "run_dir": "/home/markun/Documents/Lambes/game/assets/generated/sprites/peace-dove",
+  "states": [
+    "fly"
+  ],
+  "thresholds": {
+    "histogram_min": 0.0,
+    "dhash_min": 0.55,
+    "motion_min": 0.01
+  },
+  "rows": [
+    {
+      "state": "fly",
+      "source": "frames",
+      "expected_frames": 4,
+      "found_frames": 4,
+      "natural_pose_count": 4,
+      "frame_files": [
+        "frames/fly/frame-0.png",
+        "frames/fly/frame-1.png",
+        "frames/fly/frame-2.png",
+        "frames/fly/frame-3.png"
+      ],
+      "metrics": {
+        "histogram_intersection": {
+          "min": 0.8719897570011986,
+          "mean": 0.915900260926427
+        },
+        "dhash_similarity": {
+          "min": 0.625,
+          "mean": 0.7604166666666666
+        },
+        "motion_presence": 0.12817606209150328,
+        "centroid_sigma": {
+          "x": 0.44477260395115287,
+          "y": 1.4046996885234082
+        }
+      },
+      "ok": true,
+      "errors": [],
+      "warnings": [
+        "fly: native logical exceeds the physical cap 32x29 — capped frames (reroll candidates): 0:47x49, 1:47x49, 2:45x49, 3:45x50"
+      ]
+    }
+  ],
+  "errors": [],
+  "warnings": [
+    "fly: native logical exceeds the physical cap 32x29 — capped frames (reroll candidates): 0:47x49, 1:47x49, 2:45x49, 3:45x50"
+  ]
+}

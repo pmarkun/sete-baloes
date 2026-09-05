@@ -240,7 +240,8 @@ button {
 }
 
 .pause-button,
-.mono-button {
+.mono-button,
+.dove-inventory {
   position: absolute;
   z-index: 3;
   display: grid;
@@ -280,6 +281,62 @@ button {
 .mono-button[aria-pressed="true"] {
   color: #08070d;
   background: #e9dfcb;
+}
+
+.dove-inventory {
+  left: 12px;
+  bottom: max(14px, env(safe-area-inset-bottom));
+  width: 54px;
+  height: 54px;
+  padding: 2px;
+  border-color: rgba(214, 168, 75, 0.78);
+  background: rgba(8, 7, 13, 0.78);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms, translate 80ms;
+}
+
+.dove-inventory:not([hidden]) {
+  display: grid;
+}
+
+.dove-inventory[hidden] {
+  display: none;
+}
+
+.game-shell.is-playing .dove-inventory:not([hidden]) {
+  opacity: 0.9;
+  pointer-events: auto;
+}
+
+.dove-inventory:active:not(:disabled) {
+  translate: 2px 2px;
+}
+
+.dove-inventory:disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.dove-inventory canvas {
+  width: 42px;
+  height: 42px;
+  image-rendering: pixelated;
+}
+
+.dove-inventory span {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  display: grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  border: 1px solid var(--gold);
+  color: var(--ink);
+  background: var(--gold);
+  font-size: 10px;
+  font-weight: 900;
 }
 
 .game-shell.is-playing .pause-button {
@@ -334,6 +391,7 @@ button:focus-visible {
   .intertitle,
   .pause-button,
   .mono-button,
+  .dove-inventory,
   .touch-stick {
     transition: none;
   }
