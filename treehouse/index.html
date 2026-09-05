@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="pt-BR">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#21151e">
+<title>Casa na Árvore de X Andares</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css">
+<body>
+<main class="shell">
+  <header><a href="../" aria-label="Menu de jogos">☰</a><h1>Casa na Árvore<span>de X Andares</span></h1><button id="pause" aria-label="Pausar jogo">Ⅱ</button></header>
+  <div class="world"><canvas width="240" height="360" aria-label="Menina explorando o interior da árvore. Use as setas para andar e escalar, espaço para pular e E para interagir."></canvas>
+    <section id="overlay"><div><p id="overlay-number">UMA CASA AINDA CRESCENDO</p><h2 id="overlay-title">O próximo galho<br>é só o começo.</h2><p id="overlay-copy">Cinco andares, alguns segredos<br>e um lugar lá no alto.</p><button id="continue" disabled>CARREGANDO ARTE…</button><button id="restart" hidden>RECOMEÇAR DO PRIMEIRO</button><p class="keyboard">Setas / WASD · espaço: pular · E: ação</p></div></section>
+  </div>
+  <footer><h2 id="floor">01 / 05 · Primeiros galhos</h2><p id="hint" aria-live="polite"></p><div class="controls"><div class="dpad"><button data-key="up" aria-label="Subir escada">▲</button><button data-key="left" aria-label="Andar para a esquerda">◀</button><button data-key="down" aria-label="Descer escada">▼</button><button data-key="right" aria-label="Andar para a direita">▶</button></div><div class="actions"><button data-key="action">AÇÃO</button><button data-key="jump" class="jump">PULAR</button></div></div></footer>
+</main>
+<script type="module" src="app.mjs"></script>
+</body></html>
