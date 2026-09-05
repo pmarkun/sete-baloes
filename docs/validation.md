@@ -1,4 +1,12 @@
-# Validação mais recente — fase do espelho e proporção do canvas
+# Validação mais recente — três fases novas e proporção do canvas
+
+## Três fases novas e seletor de desenvolvedor — 5 de setembro de 2026
+
+45 testes aprovados. Os andares 14, 15 e 16 cobrem balanço e soltura da corda com impulso, gotas com recuo/queda e perseguição no claro com captura. O validador do editor reconhece `ropes`, `droplets` e `chaser`, e o `Game` continua aceitando fonte opcional de fases.
+
+Chrome DevTools conferido em 1366 × 768 e 1440 × 900, além de 390 × 844: seletor com 16 opções, abertura real de `?floor=15` pelo botão de desenvolvedor, canvas 2:3 e nenhum overflow. Screenshots dos andares 14 e 15 mostraram a corda, o rastro das gotas, a porta e os controles. Console sem erros na navegação e início das fases 14, 15 e 16.
+
+Limitações: a perseguição foi validada no Chrome e no motor, sem Safari/Firefox/WebKit ou aparelho físico; a seleção de fase é uma ferramenta local de teste e não publica rascunhos. A nova arte das gotas, corda e criatura usa geometria nativa e os assets existentes.
 
 ## Editor visual de fases — 5 de setembro de 2026
 

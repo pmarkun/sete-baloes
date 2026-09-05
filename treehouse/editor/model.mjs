@@ -7,7 +7,7 @@ export const WORLD_WIDTH = 240;
 export const WORLD_HEIGHT = 360;
 
 const collectionFields = ['platforms', 'ladders', 'objects'];
-const advancedFields = ['physics', 'lighting', 'hunter', 'paradox', 'melody', 'music', 'entryFlags'];
+const advancedFields = ['physics', 'lighting', 'hunter', 'chaser', 'paradox', 'melody', 'music', 'entryFlags'];
 const objectTypes = new Set(componentCatalog.filter(item => item.collection === 'objects').map(item => item.type));
 
 export function cloneLevel(level) {
@@ -96,6 +96,31 @@ export function validateLevel(level) {
     if (level[field] === undefined) continue;
     if (!point(level[field], field)) continue;
     if (field === 'hatch') requirement(level[field].requires, 'hatch.requires');
+  }
+  if (level.ropes !== undefined) {
+    if (!Array.isArray(level.ropes)) error('ropes', 'deve ser uma lista');
+    else for (const [index, rope] of level.ropes.entries()) {
+      const path = `ropes[${index}]`;
+      if (!rope || typeof rope !== 'object') { error(path, 'deve ser um objeto'); continue; }
+      number(rope.pivotX, `${path}.pivotX`, { min: 0, max: WORLD_WIDTH });
+      number(rope.pivotY, `${path}.pivotY`, { min: 0, max: WORLD_HEIGHT });
+      number(rope.length, `${path}.length`, { min: 1, max: WORLD_HEIGHT });
+      number(rope.amplitude, `${path}.amplitude`, { min: 0, max: 1.5 });
+      number(rope.speed, `${path}.speed`, { min: 0 });
+    }
+  }
+  if (level.droplets !== undefined) {
+    if (!Array.isArray(level.droplets)) error('droplets', 'deve ser uma lista');
+    else for (const [index, drop] of level.droplets.entries()) {
+      const path = `droplets[${index}]`;
+      if (!drop || typeof drop !== 'object') { error(path, 'deve ser um objeto'); continue; }
+      point(drop, path); number(drop.speed, `${path}.speed`, { min: 0 });
+      if (drop.drift !== undefined) number(drop.drift, `${path}.drift`, { min: 0 });
+    }
+  }
+  if (level.chaser !== undefined) {
+    if (!level.chaser || typeof level.chaser !== 'object') error('chaser', 'deve ser um objeto');
+    else { point(level.chaser.spawn, 'chaser.spawn'); number(level.chaser.speed, 'chaser.speed', { min: 0 }); if (level.chaser.triggerY !== undefined) number(level.chaser.triggerY, 'chaser.triggerY', { min: 0, max: WORLD_HEIGHT }); }
   }
   if (!level.physics || typeof level.physics !== 'object') error('physics', 'a fase precisa de configurações de física');
   else { number(level.physics.gravity, 'physics.gravity', { min: 0 }); number(level.physics.jumpSpeed, 'physics.jumpSpeed', { min: 0 }); if (level.physics.impactThreshold !== undefined) number(level.physics.impactThreshold, 'physics.impactThreshold', { min: 0 }); }

@@ -11,4 +11,7 @@ import stars from './10-constellation.mjs';
 import lantern from './11-lantern.mjs';
 import watch from './12-night-watch.mjs';
 import mirror from './13-mirror.mjs';
-export const levels = [first,gaps,bridge,exit,moon,heavy,music,plants,past,stars,lantern,watch,mirror];
+import rope from './14-rope.mjs';
+import droplets from './15-droplets.mjs';
+import clearChase from './16-clear-chase.mjs';
+export const levels = [first,gaps,bridge,exit,moon,heavy,music,plants,past,stars,lantern,watch,mirror,rope,droplets,clearChase];

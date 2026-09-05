@@ -10,7 +10,7 @@ Na raiz do repositório, execute `uv run python -m http.server 4173` e abra http
 
 ## Casa na Árvore de X Andares
 
-Uma menina explora treze andares de uma árvore em pixel art. O X faz parte do nome: novos andares podem ser acrescentados à biblioteca. A personagem usa máscara branca de coruja com duas orelhas, pele parda e cabelo castanho escuro cacheado. Os puzzles não exibem textos com soluções; objetos, sons e mudanças no cenário oferecem as pistas.
+Uma menina explora dezesseis andares de uma árvore em pixel art. O X faz parte do nome: novos andares podem ser acrescentados à biblioteca. A personagem usa máscara branca de coruja com duas orelhas, pele parda e cabelo castanho escuro cacheado. Os puzzles não exibem textos com soluções; objetos, sons e mudanças no cenário oferecem as pistas.
 
 - Setas ou WASD: andar; subir e descer somente junto às escadas.
 - Espaço: pular. E ou botão AÇÃO perto de um mecanismo: interagir. Proximidade e ↑ não acionam mecanismos.
@@ -34,10 +34,13 @@ Uma menina explora treze andares de uma árvore em pixel art. O X faz parte do n
 | 11 | Lampião, escuridão, vãos e espinhos |
 | 12 | Luz intermitente e criatura mecânica que só avança no escuro |
 | 13 | Espelho que inverte a paleta e os quatro controles direcionais |
+| 14 | Corda que balança e lança a personagem entre os galhos |
+| 15 | Gotas que caem, arrastam para trás e derrubam |
+| 16 | Criatura que persegue no claro; corra até a saída |
 
-A conclusão do décimo terceiro andar leva à copa e ao céu, mantendo o encerramento “Você ganhou!”. Ao tocar o espelho, direita vira esquerda e cima vira baixo até o fim da fase. Quem concluiu os dez andares anteriores entra no 11 com o lampião. Quem já havia concluído os cinco andares antigos continua a partir do sexto; use RECOMEÇAR para ver a nova cena do quarto andar desde o início.
+A conclusão do décimo sexto andar leva à copa e ao céu, mantendo o encerramento “Você ganhou!”. Ao tocar o espelho, direita vira esquerda e cima vira baixo até o fim da fase. Quem concluiu os dez andares anteriores entra no 11 com o lampião. Quem já havia concluído os cinco andares antigos continua a partir do sexto; use RECOMEÇAR para ver a nova cena do quarto andar desde o início.
 
-Atalhos de teste: `treehouse/?floor=4`, `treehouse/?floor=9` e `treehouse/?floor=13` abrem fases específicas. `?floor=N`, de 1 a 13, não altera seu progresso salvo. No passado, uma captura reinicia apenas a tentativa de roubo, sem apagar a subida.
+Atalhos de teste: `treehouse/?floor=4`, `treehouse/?floor=9`, `treehouse/?floor=13` e `treehouse/?floor=16` abrem fases específicas. A tela inicial também tem um seletor de desenvolvedor para escolher qualquer fase. `?floor=N`, de 1 a 16, não altera seu progresso salvo. No passado, uma captura reinicia apenas a tentativa de roubo, sem apagar a subida.
 
 ## Criar outros andares
 
@@ -51,13 +54,15 @@ node treehouse/finale.test.mjs
 node treehouse/expansion.test.mjs
 node treehouse/gravity.test.mjs
 node treehouse/night.test.mjs
+node treehouse/new-phases.test.mjs
 node treehouse/editor/editor.test.mjs
 node --check treehouse/app.mjs
+node --check treehouse/mechanics.mjs
 node --check treehouse/editor/editor.mjs
 node --check treehouse/editor/play.mjs
 ```
 
-42 testes verificam os percursos, bloqueios, ações explícitas, espelho, eventos sonoros, perseguição temporal, fuga, recuperação após captura, passagem temporizada, editor e encerramento. [Relatório de validação visual e limitações](docs/validation.md).
+45 testes verificam os percursos, bloqueios, ações explícitas, espelho, corda, gotas, perseguição no claro, eventos sonoros, perseguição temporal, fuga, recuperação após captura, passagem temporizada, editor e encerramento. [Relatório de validação visual e limitações](docs/validation.md).
 
 Depois da vitória, voltar ao menu limpa a fase salva e a marca de conclusão, preparando uma nova partida no primeiro andar. Sair no meio da subida preserva o progresso; `treehouse/?finale=1` permite ver a cena sem alterar o progresso.
 

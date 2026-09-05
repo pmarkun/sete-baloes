@@ -1,8 +1,8 @@
 # Biblioteca da Casa na Árvore
 
-Cada andar tem seu próprio arquivo em `levels/01-first-branches.mjs` até `levels/13-mirror.mjs`. `levels/index.mjs` registra a ordem; `levels.mjs` mantém o ponto de importação. `components.mjs` fornece as fábricas reutilizáveis. `physics.mjs` compartilha gravidade, colisões, objetos em queda e impactos. `engine.mjs` controla física e puzzles sem DOM. `render.mjs` usa o atlas e o fundo. `app.mjs` liga teclado, ponteiros, pausa, progressão e armazenamento à interface HTML.
+Cada andar tem seu próprio arquivo em `levels/01-first-branches.mjs` até `levels/16-clear-chase.mjs`. `levels/index.mjs` registra a ordem; `levels.mjs` mantém o ponto de importação. `components.mjs` fornece as fábricas reutilizáveis. `physics.mjs` compartilha gravidade, colisões, objetos em queda e impactos. `mechanics.mjs` contém cordas, gotas e perseguição no claro. `engine.mjs` controla física e puzzles sem DOM. `render.mjs` usa o atlas e o fundo. `app.mjs` liga teclado, ponteiros, pausa, progressão e armazenamento à interface HTML.
 
-Ao sair do último andar (atualmente o décimo terceiro), `finale.mjs` conduz a cena da copa: a menina repousa sobre as folhas por 2,5 segundos, sobe ao céu e recebe a mensagem de vitória aos 6 segundos. A vitória permanece salva neste navegador, inclusive após recarregar; voltar ao menu pelo botão de vitória ou pelo cabeçalho limpa a fase salva e a marca de vitória. A próxima entrada começa no primeiro andar. A tela de vitória permanece até essa saída explícita. Com redução de movimento, a cena fica estática e a mensagem aparece no mesmo intervalo.
+Ao sair do último andar (atualmente o décimo sexto), `finale.mjs` conduz a cena da copa: a menina repousa sobre as folhas por 2,5 segundos, sobe ao céu e recebe a mensagem de vitória aos 6 segundos. A vitória permanece salva neste navegador, inclusive após recarregar; voltar ao menu pelo botão de vitória ou pelo cabeçalho limpa a fase salva e a marca de vitória. A próxima entrada começa no primeiro andar. A tela de vitória permanece até essa saída explícita. Com redução de movimento, a cena fica estática e a mensagem aparece no mesmo intervalo.
 
 Para inspecionar a animação sem jogar nem alterar o progresso salvo, abra `?finale=1`. Verifique a lógica com `node treehouse/finale.test.mjs`.
 
@@ -33,9 +33,9 @@ Para adicionar um andar oficial, crie um arquivo em `levels/` exportando um obje
 
 Abra [`/treehouse/editor/`](editor/) no desktop. O editor usa a mesma biblioteca de componentes e o mesmo renderer do jogo, com mundo de 240 × 360, grade de 5 unidades, paleta arrastável, inspetor, desfazer/refazer, rascunhos em `localStorage` e importação/exportação do `LevelDocument` JSON versionado. A prévia em [`play.html`](editor/play.html) roda a fase em memória e não altera o progresso oficial.
 
-O documento exportado tem `schemaVersion: 1` e preserva `name`, `spawn`, `physics`, `platforms`, `ladders`, `objects`, `door` e elementos opcionais como `hatch`, `portal`, `falseExit`, `lighting`, `hunter`, `paradox`, `melody`, `music` e `entryFlags`. Erros estruturais impedem exportação e prévia; avisos de rota incompleta ficam visíveis no inspetor.
+O documento exportado tem `schemaVersion: 1` e preserva `name`, `spawn`, `physics`, `platforms`, `ladders`, `objects`, `door` e elementos opcionais como `hatch`, `portal`, `falseExit`, `lighting`, `hunter`, `chaser`, `ropes`, `droplets`, `paradox`, `melody`, `music` e `entryFlags`. Erros estruturais impedem exportação e prévia; avisos de rota incompleta ficam visíveis no inspetor.
 
-Limites do MVP: uma chave comum por andar; o editor tem seleção simples, sem seleção múltipla ou redimensionamento direto no canvas. Algumas flags e regras dos novos puzzles (`weight`, `song`, três cristais e `mirror`) são convencionais e documentadas acima. O contador acompanha a lista de fases; os textos narrativos descrevem treze andares.
+Limites do MVP: uma chave comum por andar; o editor tem seleção simples, sem seleção múltipla ou redimensionamento direto no canvas. Algumas flags e regras dos puzzles (`weight`, `song`, três cristais e `mirror`) são convencionais e documentadas acima. A configuração avançada do editor aceita `chaser`, `ropes` e `droplets`; o contador acompanha a lista de fases e os textos narrativos descrevem dezesseis andares.
 
 ## Paradoxo temporal
 
@@ -82,5 +82,13 @@ O andar 10 coloca `object('lantern',145,58)` no caminho entre a última escada e
 `lighting:{mode:'cycle',lightSeconds:3.5,darkSeconds:2.5,fade:.35}` controla a vigília no andar 12. O mesmo relógio da simulação define a máscara visual e a permissão de movimento da criatura. Pausar congela ambos. Com redução de movimento, o cenário permanece visível e escurecido de modo constante; um pequeno indicador mostra o ciclo, preservando a regra da perseguição.
 
 `hunter:{triggerY:250,spawn:{x:200,y:250},speed:46}` faz a criatura aparecer na segunda plataforma. O sistema reutilizável em `night.mjs` persegue no mesmo piso e usa as escadas do andar para subir ou descer. Captura durante o escuro reinicia só essa fase. A criatura é um guaxinim mecânico original, tributo à atmosfera de animatrônicos de FNAF. `creature`, `powerOff` e `powerOn` têm efeitos sintetizados próprios.
+
+## Corda, chuva e perseguição
+
+O andar 14 declara `ropes:[{pivotX,pivotY,length,amplitude,speed,phase}]`. A ponta balança com uma onda senoidal; um salto durante o balanço solta a personagem com impulso horizontal, permitindo atravessar o vão até os outros galhos. A posição derivada da corda é recalculada pelo motor e também aparece no editor/prévia.
+
+O andar 15 declara `droplets:[{x,y,speed,drift,phase}]`. Cada gota desce com um rastro e deriva levemente; ao tocar a personagem, aplica recuo, queda e reinicia apenas a tentativa depois de 0,8 segundo. A fase combina a chuva com um vão e espinhos para tornar o caminho legível no movimento.
+
+O andar 16 declara `chaser:{triggerY,spawn:{x,y},speed}`. A criatura aparece no claro desde o início, aproxima-se horizontalmente e captura por contato; a velocidade da personagem é maior, então a solução é correr até a porta. O seletor `DESENVOLVEDOR · abrir fase` da tela inicial abre qualquer andar com `?floor=N`, sem salvar progresso.
 
 Arte: `assets/night-objects.png`, duas poses da criatura e lampião. ImageGen integrado; [prompt e registro do asset](assets/night-objects.prompt.md). Espinhos e máscara de iluminação são geometria nativa de canvas.

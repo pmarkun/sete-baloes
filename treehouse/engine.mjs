@@ -1,6 +1,7 @@
 import { levels } from './levels.mjs';
 import { landingSurface, impact, updateObjects } from './physics.mjs';
 import { updateNight } from './night.mjs';
+import { updateChaser, updateDroplets, updateRopes } from './mechanics.mjs';
 import { thiefPose, pastSelfPose, PORTAL_X, LEDGE_Y } from './temporal.mjs';
 export const WIDTH = 240, HEIGHT = 360;
 export class Game {
@@ -8,9 +9,9 @@ export class Game {
   load(index) {
     this.index = Math.max(0, Math.min(this.levels.length - 1, index));
     this.level = structuredClone(this.levels[this.index]);
-    this.player = { ...this.level.spawn, vy: 0, grounded: true, climbing: false, facing: 1, moving: false };
+    this.player = { ...this.level.spawn, vy: 0, vx: 0, rope: null, grounded: true, climbing: false, facing: 1, moving: false };
     this.flags = {...this.level.entryFlags}; this.complete = false; this.time = 0;
-    this.hunter=null;this.hazardRetry=0;this.lastDark=false;
+    this.hunter=null;this.chaser=null;this.ropes=[];this.hazardRetry=0;this.lastDark=false;
     this.events = []; this.sequence = []; this.timer = 0; this.shake = 0;
     this.inPast = false; this.returnState = null; this.temporalClock = 0;
     this.theftClock = null; this.ghost = null; this.pastSelf = null; this.retryDelay = 0;
@@ -103,31 +104,36 @@ export class Game {
     dt = Math.min(dt, 1 / 30); this.time += dt;
     if(this.timer>0){this.timer=Math.max(0,this.timer-dt);if(!this.timer){this.flags.timer=false;this.emit('hatch');}}
     const p = this.player, previousY = p.y;
-    const mirrored = !!this.flags.mirror;
-    const axis = mirrored
-      ? Number(!!input.left) - Number(!!input.right)
-      : Number(!!input.right) - Number(!!input.left);
-    p.x = Math.max(37, Math.min(203, p.x + axis * 76 * dt));
-    p.moving = !!axis;
-    if (axis) p.facing = axis;
-    const near = this.level.ladders.find(l => Math.abs(p.x - l.x) < 10 && p.y >= l.top - 1 && p.y <= l.bottom + 2);
-    const vertical = mirrored
-      ? Number(!!input.up) - Number(!!input.down)
-      : Number(!!input.down) - Number(!!input.up);
-    // A closed ascent gate must never strand someone above it when a timer expires.
-    const canClimb = near && (!near.requires || this.flags[near.requires] || vertical > 0);
-    p.climbing = !!(canClimb && (vertical || p.climbing) && !axis);
-    if (input.jump && (p.grounded || p.climbing)) { p.vy = -this.level.physics.jumpSpeed; p.grounded = false; p.climbing = false; this.emit('jump'); }
-    else if (p.climbing) {
-      p.x = near.x; p.y = Math.max(near.top, Math.min(near.bottom, p.y + vertical * 64 * dt)); p.vy = 0;
-      p.grounded = p.y === near.top || p.y === near.bottom;
-    }
-    if (!p.climbing) {
-      p.vy += this.level.physics.gravity * dt; p.y += p.vy * dt; p.grounded = false;
-      const s=p.vy>=0&&landingSurface(this.level,this.flags,p.x,previousY,p.y);
-      if(s){impact(this,p.vy);p.y=s.y;p.vy=0;p.grounded=true;}
+    const ridingRope = updateRopes(this, dt, input);
+    if (!ridingRope) {
+      const mirrored = !!this.flags.mirror;
+      const axis = mirrored
+        ? Number(!!input.left) - Number(!!input.right)
+        : Number(!!input.right) - Number(!!input.left);
+      p.x = Math.max(37, Math.min(203, p.x + axis * 76 * dt + p.vx * dt));
+      p.vx *= Math.pow(.0001, dt);
+      p.moving = !!axis || Math.abs(p.vx) > 8;
+      if (axis) p.facing = axis;
+      const near = this.level.ladders.find(l => Math.abs(p.x - l.x) < 10 && p.y >= l.top - 1 && p.y <= l.bottom + 2);
+      const vertical = mirrored
+        ? Number(!!input.up) - Number(!!input.down)
+        : Number(!!input.down) - Number(!!input.up);
+      // A closed ascent gate must never strand someone above it when a timer expires.
+      const canClimb = near && (!near.requires || this.flags[near.requires] || vertical > 0);
+      p.climbing = !!(canClimb && (vertical || p.climbing) && !axis);
+      if (input.jump && (p.grounded || p.climbing)) { p.vy = -this.level.physics.jumpSpeed; p.grounded = false; p.climbing = false; this.emit('jump'); }
+      else if (p.climbing) {
+        p.x = near.x; p.y = Math.max(near.top, Math.min(near.bottom, p.y + vertical * 64 * dt)); p.vy = 0;
+        p.grounded = p.y === near.top || p.y === near.bottom;
+      }
+      if (!p.climbing) {
+        p.vy += this.level.physics.gravity * dt; p.y += p.vy * dt; p.grounded = false;
+        const s=p.vy>=0&&landingSurface(this.level,this.flags,p.x,previousY,p.y);
+        if(s){impact(this,p.vy);p.y=s.y;p.vy=0;p.grounded=true;}
+      }
     }
     updateObjects(this,dt);
+    updateDroplets(this,dt);
     const mirror = this.level.objects.find(o => o.type === 'mirror');
     if (mirror && !this.flags.mirror && Math.abs(p.x - mirror.x) < 16 && p.y > mirror.y - 38 && p.y < mirror.y + 4) {
       this.flags.mirror = true;
@@ -139,6 +145,7 @@ export class Game {
       else {this.flags[o.type] = true; }
     }
     updateNight(this,dt);
+    updateChaser(this,dt);
     if (input.action&&!this.hazardRetry) this.interact();
     if(!this.complete)this.updateTemporal(dt);
   }

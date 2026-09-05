@@ -36,10 +36,12 @@ jobs:
           node treehouse/expansion.test.mjs
           node treehouse/gravity.test.mjs
           node treehouse/night.test.mjs
+          node treehouse/new-phases.test.mjs
           node treehouse/editor/editor.test.mjs
           node --check treehouse/app.mjs
           node --check treehouse/render.mjs
           node --check treehouse/audio.mjs
+          node --check treehouse/mechanics.mjs
           node --check treehouse/editor/editor.mjs
           node --check treehouse/editor/play.mjs
 

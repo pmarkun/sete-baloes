@@ -66,9 +66,9 @@ test('mirror floor reverses both axes and is the new final floor',()=>{
   while(Math.abs(g.player.x-115)>1.3)tick(g,{right:true});
   g.interact();assert.ok(g.complete);
 });
-test('only the new mirror floor leads to the canopy now',()=>{
-  assert.equal(levels.length,13);assert.equal(destinationAfterExit(4,levels.length),'complete');
-  assert.equal(destinationAfterExit(11,levels.length),'complete');assert.equal(destinationAfterExit(12,levels.length),'finale');
+test('only the last new floor leads to the canopy now',()=>{
+  assert.equal(levels.length,16);assert.equal(destinationAfterExit(4,levels.length),'complete');
+  assert.equal(destinationAfterExit(14,levels.length),'complete');assert.equal(destinationAfterExit(15,levels.length),'finale');
 });
 test('accepted jumps and an opened hatch emit their distinct sound events',()=>{
   const g=new Game(3);tick(g,{jump:true});assert.ok(g.drainEvents().some(e=>e.type==='jump'));

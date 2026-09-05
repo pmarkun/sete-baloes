@@ -7,9 +7,9 @@ export function lightState(level,time) {
   const opacity=dark?1:Math.max(0,1-phase/fade,(phase-(l.lightSeconds-fade))/fade);
   return {dark,opacity};
 }
-export function failAttempt(game) {
+export function failAttempt(game, event='caught') {
   if(game.hazardRetry)return;
-  game.hazardRetry=.8;game.player.moving=false;game.emit('caught');
+  game.hazardRetry=.8;game.player.moving=false;game.emit(event);
 }
 function pursuitTarget(game,h) {
   const p=game.player;

@@ -72,5 +72,5 @@ test('Game executa uma fase customizada sem tocar na lista oficial', () => {
   game.interact();
   assert.equal(game.complete, true);
   assert.equal(game.level.name, 'Teste customizado');
-  assert.equal(levels.length, 13);
+  assert.equal(levels.length, 16);
 });

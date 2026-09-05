@@ -26,6 +26,10 @@ const game = new Game(saved), canvas=$('canvas'), ctx=canvas.getContext('2d'), w
 function fitCanvas(){const width=Math.floor(Math.min(world.clientWidth,world.clientHeight*2/3));canvas.style.width=`${width}px`;canvas.style.height=`${Math.floor(width*3/2)}px`;}
 fitCanvas();window.addEventListener('resize',fitCanvas);window.visualViewport?.addEventListener('resize',fitCanvas);
 const sound=new Soundscape();
+const devFloor=$('#dev-floor');
+levels.forEach((level,index)=>devFloor.add(new Option(`${String(index+1).padStart(2,'0')} · ${level.name}`,String(index+1))));
+devFloor.value=preview&&!previewFinale?String(previewFloor):'1';
+$('#dev-start').onclick=()=>{const floor=Number(devFloor.value);if(Number.isInteger(floor)&&floor>=1&&floor<=levels.length)location.href=`?floor=${floor}`;};
 function soundButton(){ $('#sound').textContent=sound.enabled?'♪':'♪×';$('#sound').setAttribute('aria-pressed',String(sound.enabled));$('#sound').setAttribute('aria-label',sound.enabled?'Silenciar música e efeitos':'Ativar música e efeitos'); }
 function unlockSound(){sound.unlock().then(()=>{$('#sound').dataset.state=sound.context?.state||'unavailable';}).catch(()=>{$('#sound').dataset.state='blocked';});}
 $('#sound').onclick=()=>{sound.toggle();unlockSound();soundButton();if(mode==='playing')document.activeElement?.blur();};soundButton();
@@ -51,7 +55,7 @@ function hud(){
   $('.controls').classList.toggle('mirrored',mirrored);
 }
 function overlay(title,copy,button){clearInput();$('#overlay').hidden=false;$('#overlay-title').textContent=title;$('#overlay-copy').textContent=copy;$('#continue').textContent=button;$('#restart').hidden=false;$('#overlay-number').textContent=`${String(game.index+1).padStart(2,'0')} / ${String(levels.length).padStart(2,'0')} · ${game.level.name}`;}
-function start(nextMode='playing'){unlockSound();mode=nextMode;$('#overlay').hidden=true;document.activeElement?.blur();$('#pause').textContent='Ⅱ';$('#pause').setAttribute('aria-label','Pausar jogo');clearInput();}
+function start(nextMode='playing'){unlockSound();mode=nextMode;$('#overlay').hidden=true;$('#dev-tools').hidden=true;document.activeElement?.blur();$('#pause').textContent='Ⅱ';$('#pause').setAttribute('aria-label','Pausar jogo');clearInput();}
 function pause(){if(mode==='playing'||mode==='finale'){pausedMode=mode;mode='paused';overlay('Uma pausa no galho.','A árvore espera por você.','CONTINUAR');if(pausedMode==='finale')$('#restart').hidden=true;$('#pause').textContent='▶';$('#pause').setAttribute('aria-label','Continuar jogo');}else if(mode==='paused')start(pausedMode);}
 function beginFinale(alreadyWon=false){
   clearInput();game.load(levels.length-1);mode='finale';finaleElapsed=alreadyWon?FINALE_DURATION:0;

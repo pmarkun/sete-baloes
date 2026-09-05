@@ -251,8 +251,8 @@ function editorFieldsFor(ref, value) {
 
 function renderInspector() {
   if (!selected || !selectedValue()) {
-    const advanced = {}; for (const key of ['lighting', 'hunter', 'paradox', 'melody', 'music', 'entryFlags']) if (draft[key] !== undefined) advanced[key] = draft[key];
-    inspector.innerHTML = `<div class="inspector-form"><h3>Configuração da fase</h3><div class="field-grid">${textField('Nome', 'name', draft.name, true)}${numberField('Spawn X', 'spawn.x', draft.spawn.x)}${numberField('Spawn Y', 'spawn.y', draft.spawn.y)}${numberField('Gravidade', 'physics.gravity', draft.physics.gravity, { max: 2000 })}${numberField('Força do pulo', 'physics.jumpSpeed', draft.physics.jumpSpeed, { max: 500 })}${numberField('Limite de impacto', 'physics.impactThreshold', draft.physics.impactThreshold ?? '', { max: 2000 })}${advancedField(advanced, 'level')}</div></div><div class="empty-inspector">Selecione uma peça no mundo para editar suas propriedades. A configuração avançada aceita iluminação, perseguição, paradoxo, ritmo e flags de entrada.</div>`;
+    const advanced = {}; for (const key of ['lighting', 'hunter', 'chaser', 'ropes', 'droplets', 'paradox', 'melody', 'music', 'entryFlags']) if (draft[key] !== undefined) advanced[key] = draft[key];
+    inspector.innerHTML = `<div class="inspector-form"><h3>Configuração da fase</h3><div class="field-grid">${textField('Nome', 'name', draft.name, true)}${numberField('Spawn X', 'spawn.x', draft.spawn.x)}${numberField('Spawn Y', 'spawn.y', draft.spawn.y)}${numberField('Gravidade', 'physics.gravity', draft.physics.gravity, { max: 2000 })}${numberField('Força do pulo', 'physics.jumpSpeed', draft.physics.jumpSpeed, { max: 500 })}${numberField('Limite de impacto', 'physics.impactThreshold', draft.physics.impactThreshold ?? '', { max: 2000 })}${advancedField(advanced, 'level')}</div></div><div class="empty-inspector">Selecione uma peça no mundo para editar suas propriedades. A configuração avançada aceita iluminação, perseguição, cordas, gotas, paradoxo, ritmo e flags de entrada.</div>`;
     bindLevelInspector(); return;
   }
   const value = selectedValue();
@@ -275,7 +275,7 @@ function bindLevelInspector() {
   inspector.querySelector('[data-advanced="level"]')?.addEventListener('change', event => {
     try {
       const advanced = JSON.parse(event.target.value); if (!advanced || typeof advanced !== 'object' || Array.isArray(advanced)) throw new Error('use um objeto JSON');
-      commit(level => { for (const key of ['lighting', 'hunter', 'paradox', 'melody', 'music', 'entryFlags']) delete level[key]; Object.assign(level, advanced); });
+      commit(level => { for (const key of ['lighting', 'hunter', 'chaser', 'ropes', 'droplets', 'paradox', 'melody', 'music', 'entryFlags']) delete level[key]; Object.assign(level, advanced); });
       event.target.setCustomValidity('');
     } catch (error) { event.target.setCustomValidity(error.message); event.target.reportValidity(); setStatus(`JSON avançado inválido: ${error.message}`, true); }
   });
