@@ -32,7 +32,7 @@ let jumpQueued=false,actionQueued=false;
 const keys = {ArrowLeft:'left',a:'left',ArrowRight:'right',d:'right',ArrowUp:'up',w:'up',ArrowDown:'down',s:'down',' ':'jump',e:'action'};
 function clearInput(){held.clear();keyboard.clear();jumpQueued=false;actionQueued=false;document.querySelectorAll('.held').forEach(b=>b.classList.remove('held'));}
 function save(){if(preview)return;try{localStorage.setItem(storageKey,String(game.index));}catch{}}
-function hud(){ $('#floor').textContent=game.inPast?'04 / 10 · O passado está subindo':`${String(game.index+1).padStart(2,'0')} / ${String(levels.length).padStart(2,'0')} · ${game.level.name}`;const hint=game.message||game.level.hint;if($('#hint').textContent!==hint)$('#hint').textContent=hint; }
+function hud(){ $('#floor').textContent=game.inPast?'04 / 10':`${String(game.index+1).padStart(2,'0')} / ${String(levels.length).padStart(2,'0')} · ${game.level.name}`;$('#hint').hidden=true; }
 function overlay(title,copy,button){clearInput();$('#overlay').hidden=false;$('#overlay-title').textContent=title;$('#overlay-copy').textContent=copy;$('#continue').textContent=button;$('#restart').hidden=false;$('#overlay-number').textContent=`${String(game.index+1).padStart(2,'0')} / ${String(levels.length).padStart(2,'0')} · ${game.level.name}`;}
 function start(nextMode='playing'){unlockSound();mode=nextMode;$('#overlay').hidden=true;document.activeElement?.blur();$('#pause').textContent='Ⅱ';$('#pause').setAttribute('aria-label','Pausar jogo');clearInput();}
 function pause(){if(mode==='playing'||mode==='finale'){pausedMode=mode;mode='paused';overlay('Uma pausa no galho.','A árvore espera por você.','CONTINUAR');if(pausedMode==='finale')$('#restart').hidden=true;$('#pause').textContent='▶';$('#pause').setAttribute('aria-label','Continuar jogo');}else if(mode==='paused')start(pausedMode);}
@@ -41,6 +41,7 @@ function beginFinale(alreadyWon=false){
   $('#overlay').hidden=true;$('.shell').classList.add('at-canopy');
   $('#floor').textContent='Último andar · A copa da árvore';
   $('#hint').textContent='Você chegou ao último andar. Olha o céu!';
+  $('#hint').hidden=false;
   document.querySelectorAll('[data-key]').forEach(button=>button.disabled=true);
   if(alreadyWon)showVictory();
 }
@@ -70,8 +71,8 @@ function frame(now){const dt=Math.min((now-last)/1000,1/30);last=now;if(mode==='
   game.step(dt,input);for(const event of game.drainEvents())sound.effect(event);hud();if(game.complete){mode=destinationAfterExit(game.index,levels.length);if(mode==='finale')beginFinale();else{overlay('Mais perto do céu.',`Andar ${game.index+1} concluído. Vamos descobrir o próximo?`,'PRÓXIMO ANDAR');$('#continue').focus();}}
 }
 if(mode==='finale'){finaleElapsed+=dt;if(finalePose(finaleElapsed).won)showVictory();}
-sound.setActive(mode==='playing'||mode==='finale');sound.update();
-if(art){if(mode==='finale'||mode==='won'||(mode==='paused'&&pausedMode==='finale'))renderFinale(ctx,art,finalePose(finaleElapsed,reducedMotion.matches));else render(ctx,game,art);}
+sound.setScene(mode==='finale'||mode==='won'?null:game.level.music);sound.setActive(mode==='playing'||mode==='finale');sound.update();
+if(art){if(mode==='finale'||mode==='won'||(mode==='paused'&&pausedMode==='finale'))renderFinale(ctx,art,finalePose(finaleElapsed,reducedMotion.matches));else render(ctx,game,art,{reducedMotion:reducedMotion.matches});}
 requestAnimationFrame(frame);}
 hud();
 loadArt().then(a=>{art=a;$('#continue').disabled=false;$('#continue').textContent=saved?'CONTINUAR SUBIDA':'COMEÇAR A SUBIDA';if(saved)$('#restart').hidden=false;if(previewFinale||savedVictory)beginFinale(savedVictory&&!previewFinale);requestAnimationFrame(frame);}).catch(error=>{$('#overlay-title').textContent='A arte não carregou.';$('#overlay-copy').textContent='Confira a conexão e recarregue a página.';console.error(error);});

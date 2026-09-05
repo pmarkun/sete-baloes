@@ -1,5 +1,6 @@
 // Original score: "Galhos de amanhã", a gentle C-major waltz at 96 BPM.
 // Synthesized locally: no streaming, external services, or audio dependencies.
+import { rhythmPattern, RHYTHM_TICK } from './rhythm.mjs';
 const melody = [72,76,79,81,79,76, 74,77,81,84,81,77, 71,74,79,83,79,74, 72,76,79,76,74,72];
 const roots = [48,53,55,48];
 const hz = midi => 440 * 2 ** ((midi-69)/12);
@@ -27,7 +28,14 @@ export class Soundscape {
   setActive(active) {
     if(this.active===active)return;this.active=active;
     if(!active){for(const voice of this.voices){try{voice.stop();}catch{}}}
-    else if(this.context)this.nextBeat=this.context.currentTime+.03;
+    else if(this.context){this.nextBeat=this.context.currentTime+.03;this.beat=0;}
+  }
+  setScene(music) {
+    const key=JSON.stringify(music?.rhythm||null);
+    if(key===this.scene)return;
+    this.scene=key;this.pattern=music?.rhythm?rhythmPattern(music.rhythm):null;this.beat=0;
+    for(const voice of this.voices){try{voice.stop();}catch{}}
+    if(this.context)this.nextBeat=this.context.currentTime+.15;
   }
   tone(midi,duration=.16,volume=.09,type='triangle',when=0,slide=0) {
     if(!this.context||!this.enabled||this.voices.size>40)return;
@@ -44,6 +52,12 @@ export class Soundscape {
     const now=this.context.currentTime;
     if(this.nextBeat<now-.5)this.nextBeat=now;
     while(this.nextBeat<now+.1){
+      if(this.pattern){
+        const i=this.beat%this.pattern.length;
+        if(i===0){this.tone(48,2,.035,'sine',this.nextBeat);this.tone(67,2,.018,'sine',this.nextBeat);}
+        if(this.pattern[i]){this.tone(55,.18,.16,'triangle',this.nextBeat,-12);this.tone(79,.08,.045,'sine',this.nextBeat);}
+        this.nextBeat+=RHYTHM_TICK;this.beat++;continue;
+      }
       const i=this.beat%melody.length,root=roots[Math.floor(i/6)];
       this.tone(melody[i],.29,.065,'triangle',this.nextBeat);
       this.tone(root+(i%3===0?0:12),.32,.045,'sine',this.nextBeat);
@@ -56,6 +70,7 @@ export class Soundscape {
     if(type==='jump')this.tone(65,.14,.13,'square',now,12);
     else if(type==='lever'){this.tone(42,.09,.16,'triangle');this.tone(54,.08,.10,'square',now+.07);}
     else if(type==='hatch'){this.tone(36,.24,.2,'triangle',now,-9);this.tone(48,.12,.1,'square',now+.09);}
+    else if(type==='impact')this.tone(35,.35,.25,'triangle',now,-14);
     else if(type==='crate')this.tone(38,.10,.15,'triangle',now,-5);
     else if(type==='bell')this.tone([0,72,76,79][value],.6,.18,'sine');
     else if(type==='portal'){[60,67,74,81].forEach((n,i)=>this.tone(n,.35,.1,'sine',now+i*.075));}

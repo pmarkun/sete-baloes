@@ -34,6 +34,7 @@ jobs:
           node treehouse/engine.test.mjs
           node treehouse/finale.test.mjs
           node treehouse/expansion.test.mjs
+          node treehouse/gravity.test.mjs
           node --check treehouse/app.mjs
           node --check treehouse/render.mjs
           node --check treehouse/audio.mjs

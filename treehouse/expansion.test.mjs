@@ -3,10 +3,7 @@ import assert from 'node:assert/strict';
 import { Game } from './engine.mjs';
 import { levels } from './levels.mjs';
 import { destinationAfterExit } from './finale.mjs';
-const tick=(g,input={},n=1)=>{for(let i=0;i<n;i++)g.step(1/60,input);};
-const action=g=>tick(g,{action:true});
-function walk(g,x){for(let i=0;i<300&&Math.abs(g.player.x-x)>1.3;i++)tick(g,{[g.player.x<x?'right':'left']:true});assert.ok(Math.abs(g.player.x-x)<2);}
-function climb(g,x,y){walk(g,x);for(let i=0;i<300&&Math.abs(g.player.y-y)>.1;i++)tick(g,{[g.player.y>y?'up':'down']:true});assert.ok(Math.abs(g.player.y-y)<1,`y ${g.player.y} expected ${y}`);}
+import {tick,walk,climb,jumpTo,action} from './test-helpers.mjs';
 function finish(g){climb(g,65,160);climb(g,175,70);walk(g,115);action(g);assert.ok(g.complete);}
 
 test('proximity and UP do not activate a lever; ACTION emits effects only once',()=>{
@@ -18,21 +15,21 @@ test('proximity and UP do not activate a lever; ACTION emits effects only once',
 test('floor 6: push the crate onto the counterweight and finish',()=>{
   const g=new Game(5);climb(g,175,250);
   for(let i=0;i<4;i++){const crate=g.level.objects.find(o=>o.type==='crate');walk(g,crate.x-14);tick(g,{right:true});action(g);}
-  assert.ok(g.flags.weight);finish(g);
+  assert.ok(g.flags.weight);walk(g,125);for(let i=0;i<3;i++)jumpTo(g,125,250);tick(g,{},60);assert.ok(g.flags.key);finish(g);
 });
 test('floor 7: wrong bell resets the sequence; correct melody unlocks exit',()=>{
-  const g=new Game(6);climb(g,175,250);walk(g,65);action(g);assert.deepEqual(g.sequence,[]);
-  for(const x of [120,65,185]){walk(g,x);action(g);}
+  const g=new Game(6);climb(g,175,250);walk(g,120);action(g);assert.deepEqual(g.sequence,[]);
+  for(const x of [65,185,120]){walk(g,x);action(g);}
   assert.ok(g.flags.song);finish(g);
 });
 test('floor 8: seed and explicit planting grow a climbable vine',()=>{
   const g=new Game(7);climb(g,175,250);walk(g,45);assert.ok(g.flags.seed);walk(g,65);
-  tick(g,{up:true},30);assert.equal(g.flags.grown,undefined);action(g);assert.ok(g.flags.grown);finish(g);
+  tick(g,{up:true},30);assert.equal(g.flags.grown,undefined);action(g);assert.ok(g.flags.grown);climb(g,65,180);walk(g,80);jumpTo(g,115,155);walk(g,120);jumpTo(g,160,130);walk(g,155);jumpTo(g,115,105);climb(g,110,70);walk(g,115);action(g);assert.ok(g.complete);
 });
 test('floor 4: threshold opens portal, hooded self steals key and false exit stays shut',()=>{
   const g=new Game(3);assert.equal(g.ghost,null);climb(g,175,250);assert.ok(g.ghost);
   tick(g,{},230);assert.equal(g.ghost,null);assert.ok(g.level.objects.find(o=>o.type==='exitKey').collected);
-  assert.match(g.message,/roubou/);assert.equal(g.complete,false);
+  assert.equal(g.message,undefined);assert.equal(g.complete,false);
 });
 test('floor 9: equip cloak, return to same floor 4, steal key and escape to preserved floor 9',()=>{
   const g=new Game(8);climb(g,175,250);walk(g,115);tick(g,{up:true},30);assert.equal(g.flags.cloak,undefined);

@@ -1,0 +1,11 @@
+import first from './01-first-branches.mjs';
+import gaps from './02-broken-walkways.mjs';
+import bridge from './03-three-bridges.mjs';
+import exit from './04-almost-exit.mjs';
+import moon from './05-moon.mjs';
+import heavy from './06-heavy-roots.mjs';
+import music from './07-listening-room.mjs';
+import plants from './08-living-stairs.mjs';
+import past from './09-return.mjs';
+import stars from './10-constellation.mjs';
+export const levels = [first,gaps,bridge,exit,moon,heavy,music,plants,past,stars];

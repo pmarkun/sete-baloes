@@ -1,6 +1,6 @@
 # Biblioteca da Casa na Árvore
 
-`levels.mjs` define as fases. `engine.mjs` controla física e puzzles sem DOM. `render.mjs` usa o atlas e o fundo. `app.mjs` liga teclado, ponteiros, pausa, progressão e armazenamento à interface HTML.
+Cada andar tem seu próprio arquivo em `levels/01-first-branches.mjs` até `levels/10-constellation.mjs`. `levels/index.mjs` registra a ordem; `levels.mjs` mantém o ponto de importação. `components.mjs` fornece as fábricas reutilizáveis. `physics.mjs` compartilha gravidade, colisões, objetos em queda e impactos. `engine.mjs` controla física e puzzles sem DOM. `render.mjs` usa o atlas e o fundo. `app.mjs` liga teclado, ponteiros, pausa, progressão e armazenamento à interface HTML.
 
 Ao sair do último andar (atualmente o décimo), `finale.mjs` conduz a cena da copa: a menina repousa sobre as folhas por 2,5 segundos, sobe ao céu e recebe a mensagem de vitória aos 6 segundos. A vitória permanece salva neste navegador, inclusive após recarregar; a única ação no encerramento volta ao menu. Não há reinício do primeiro andar nesse fluxo. Com redução de movimento, a cena fica estática e a mensagem aparece no mesmo intervalo.
 
@@ -24,9 +24,9 @@ Para inspecionar a animação sem jogar nem alterar o progresso salvo, abra `?fi
 | `portal: {x,y}` | AÇÃO entra no passado quando há manto; no passado, exige a chave para retornar. |
 | `falseExit: {x,y}` / `object('exitKey', x, y)` | Porta SAÍDA narrativa; chave retirada pela figura do futuro na primeira visita, coletada com AÇÃO no retorno. |
 
-Mundo lógico: 240 × 360. Origem no canto superior esquerdo, y aumenta para baixo. A posição da menina corresponde ao centro horizontal e à base dos pés. Plataformas e escadas devem formar rotas alcançáveis; o salto sobe cerca de 35 unidades. A física usa passos limitados a 1/30 s.
+Mundo lógico: 240 × 360. Origem no canto superior esquerdo, y aumenta para baixo. A posição da menina corresponde ao centro horizontal e à base dos pés. Plataformas e escadas devem formar rotas alcançáveis; o salto normal sobe cerca de 35 unidades, o lunar cerca de 63 e o pesado cerca de 21. A física usa passos limitados a 1/30 s.
 
-Para adicionar um andar, acrescente um objeto em `levels` com `name`, `hint`, `spawn`, `platforms`, `ladders`, `objects` e `door`. Use flags distintas para mecanismos independentes. Inclua um teste de percurso que caminhe, pule e escale até a saída; não teletransporte a personagem no teste de resolução. O inventário reinicia entre andares.
+Para adicionar um andar, crie um arquivo em `levels/` exportando um objeto baseado em `base()`, com `name`, `spawn`, `platforms`, `ladders`, `objects` e `door`. Registre o import em `levels/index.mjs`. Não adicione `hint`: as pistas devem estar nos objetos, sons e suas reações. Use flags distintas para mecanismos independentes. Inclua um teste de percurso que caminhe, pule e escale até a saída; não teletransporte a personagem no teste de resolução. O inventário reinicia entre andares.
 
 Limites do MVP: uma chave comum por andar; sem editor visual. Algumas flags e regras dos novos puzzles (`weight`, `song`, três cristais) são convencionais e documentadas acima. O contador acompanha a lista de fases; os textos narrativos descrevem dez andares.
 
@@ -50,7 +50,18 @@ Assets produzidos com ImageGen integrado, sem API externa em runtime:
 - `assets/tree.png`: tronco oco frontal, bordas com casca e folhas, centro escuro desocupado para plataformas.
 - `assets/tree-outward.png`: revisão usada pelo jogo; colunas laterais com todos os galhos projetados para o exterior, mantendo o miolo livre.
 - `assets/canopy.png`: cena exterior da copa, com folhas sob a menina e céu aberto acima.
-- `assets/sprites.png`: atlas transparente com menina parada, andando e escalando, chave, porta, alavanca, plataforma e escada.
-- `assets/time-objects-alpha.png`: atlas RGBA de manto parado/andando, portal, roupa, caixa, sino, planta e cristal. Gerado com ImageGen a partir da identidade original; uma segunda edição removeu o fundo. O rosto da skin de manto fica inteiramente encoberto. A skin normal foi preservada.
+- `assets/sprites.png`: atlas original, mantido para chave, porta, alavanca, plataforma e escada.
+- `assets/character-owl.png`: três poses RGBA da personagem aprovada, com pele parda, bob castanho escuro de cachos largos, máscara branca e duas orelhas. Usado na subida, na versão passada e na copa.
+- `assets/time-objects-alpha.png`: atlas RGBA de manto parado/andando, portal, roupa, caixa, sino, planta e cristal. Gerado com ImageGen a partir da identidade original; uma segunda edição removeu o fundo. O rosto da skin de manto fica inteiramente encoberto. O manto continua cobrindo a identidade.
 
 Os recortes normalizados ficam em `render.mjs`. Colisões são definidas pelo motor, independentemente da resolução dos PNGs. Interface e indicadores de estado são nativos; a arte dos componentes vem do atlas.
+
+## Gravidade e parkour
+
+`physics: {gravity, jumpSpeed, impactThreshold?}` pertence a cada fase. O andar 5 usa 110/118, o normal 430/175 e o pesado 850/190. A velocidade horizontal permanece 76. Pisos são atravessáveis de baixo para cima e sólidos na queda; errar um vão devolve a personagem a um piso inferior, sem reiniciar o puzzle.
+
+`key(x,y,{falling:true,vy:0})` participa da mesma gravidade e pousa 12 unidades acima do piso. No andar 6, `{suspended:true,impacts:0,releaseAfter:3,vy:0}` segura a chave até três aterrissagens acima de `impactThreshold:150`. Andar não conta como impacto; chave suspensa não é coletável. A queda forte gera `impact`, treme o cenário e a chave. `prefers-reduced-motion` suprime os deslocamentos visuais, preservando a física e o som.
+
+## Pista rítmica
+
+O andar 7 declara uma única sequência `[1,3,2]`, compartilhada por `melody` e `music.rhythm`. `rhythm.mjs` intercala dois ticks vazios entre grupos e sete adicionais ao fim; cada tick dura 0,32 s. A trilha troca a valsa por batidas de madeira sobre um fundo suave, com intervalo final de 3,2 s entre a última batida e a próxima repetição. Não há solução em texto na interface. Pausar e retomar reinicia o ciclo; mudar de fase restaura a valsa. O botão ♪ silencia também esta pista, portanto é preciso reativá-lo para ouvi-la.

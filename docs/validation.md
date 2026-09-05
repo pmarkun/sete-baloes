@@ -1,5 +1,15 @@
 # Validação do MVP — 5 de setembro de 2026
 
+## Revisão atual: personagem, parkour, gravidade e ritmo
+
+26 testes aprovados. Percursos dos dez andares executam caminhada, escada, saltos e ações no motor, sem teletransporte nos testes de resolução. Novas verificações comparam tempo de voo normal/lunar/pesado, gravidade em objetos, três impactos para soltar a chave, ausência de impactos ao ficar em pé, pouso da chave e igualdade entre grupos rítmicos e solução. O encerramento mantém os três testes anteriores e sua animação não foi alterada.
+
+Chrome conectado: 360×800, 390×844, 768×1024, 1366×768 e 600×719 sem overflow, rodapé visível e botões de pelo menos 44 px. Screenshot mobile do andar lunar inspecionado: sprite com máscara clara e duas orelhas, sem fundo opaco. PNG RGBA verificado: 1725×912, 1.167.108 pixels totalmente transparentes. Saltos via botão de ponteiro e teclado produziram movimento real; três aterrissagens pesadas dispararam três impactos e soltaram a chave. Render com redução de movimento manteve transformação [0,0], enquanto o normal tremeu.
+
+Áudio iniciou após clique real, estado running. Instrumentação do agendador observou grupos 1/3/2 por três ciclos: intervalos 0,96 / 0,32 / 0,32 / 0,96 / 0,32 / 3,20 segundos. Mute reduziu o ganho para próximo de zero; pausa encerrou as vozes. A pista foi validada pelo sinal e agendamento, sem avaliação acústica em aparelho físico. Nenhum erro/aviso de console.
+
+Limitações atuais: Chrome somente; sem Firefox/WebKit, Safari/iOS/Android físicos ou multitouch real. Os dez percursos completos foram validados no motor; não foram todos repetidos manualmente no navegador. A pista musical requer som ligado. Registros abaixo descrevem revisões anteriores e não substituem esta matriz.
+
 ## Expansão para dez andares, áudio e paradoxo
 
 22 testes aprovados: os dez percursos completos, AÇÃO explícita (↑ e proximidade não acionam alavancas), melodia correta/incorreta, contrapeso, plantio, coleta, alçapão temporizado e descida após expiração, retorno ao mesmo andar 4, roubo, fuga, restauração do andar 9, captura com nova tentativa, eventos sonoros e vitória só após o décimo andar.
