@@ -2,25 +2,39 @@ import { Game } from './engine.mjs';
 import { levels } from './levels.mjs';
 import { loadArt, render, renderFinale } from './render.mjs';
 import { destinationAfterExit, finalePose, FINALE_DURATION } from './finale.mjs';
+import { Soundscape } from './audio.mjs';
 const $ = s => document.querySelector(s);
 const storageKey = 'casa-na-arvore-progress-v1';
 const victoryKey = `${storageKey}-won`;
-const previewFinale = new URLSearchParams(location.search).has('finale');
+const params=new URLSearchParams(location.search);
+const previewFinale = params.has('finale');
+const previewFloor=Number(params.get('floor'));
+const preview=previewFinale||(Number.isInteger(previewFloor)&&previewFloor>=1&&previewFloor<=levels.length);
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 let saved = 0, savedVictory = false;
 try { saved = Math.min(levels.length-1,Math.max(0,Number(localStorage.getItem(storageKey))||0)); } catch { /* Private browsing may disable storage. */ }
-try { savedVictory = localStorage.getItem(victoryKey) === 'true'; } catch {}
+try {
+  const won=localStorage.getItem(victoryKey);
+  savedVictory = won === String(levels.length);
+  // The old five-floor ending unlocks the newly added sixth floor.
+  if(won==='true')saved=Math.max(saved,5);
+} catch {}
+if(preview&&!previewFinale){saved=previewFloor-1;savedVictory=false;}
 const game = new Game(saved), canvas=$('canvas'), ctx=canvas.getContext('2d');
+const sound=new Soundscape();
+function soundButton(){ $('#sound').textContent=sound.enabled?'♪':'♪×';$('#sound').setAttribute('aria-pressed',String(sound.enabled));$('#sound').setAttribute('aria-label',sound.enabled?'Silenciar música e efeitos':'Ativar música e efeitos'); }
+function unlockSound(){sound.unlock().then(()=>{$('#sound').dataset.state=sound.context?.state||'unavailable';}).catch(()=>{$('#sound').dataset.state='blocked';});}
+$('#sound').onclick=()=>{sound.toggle();unlockSound();soundButton();if(mode==='playing')document.activeElement?.blur();};soundButton();
 let mode='intro',art,last=0;
 let finaleElapsed=0, pausedMode='playing';
 const held = new Map(), keyboard = new Set();
 let jumpQueued=false,actionQueued=false;
 const keys = {ArrowLeft:'left',a:'left',ArrowRight:'right',d:'right',ArrowUp:'up',w:'up',ArrowDown:'down',s:'down',' ':'jump',e:'action'};
 function clearInput(){held.clear();keyboard.clear();jumpQueued=false;actionQueued=false;document.querySelectorAll('.held').forEach(b=>b.classList.remove('held'));}
-function save(){try{localStorage.setItem(storageKey,String(game.index));}catch{}}
-function hud(){ $('#floor').textContent=`${String(game.index+1).padStart(2,'0')} / ${String(levels.length).padStart(2,'0')} · ${game.level.name}`;$('#hint').textContent=game.message||game.level.hint; }
+function save(){if(preview)return;try{localStorage.setItem(storageKey,String(game.index));}catch{}}
+function hud(){ $('#floor').textContent=game.inPast?'04 / 10 · O passado está subindo':`${String(game.index+1).padStart(2,'0')} / ${String(levels.length).padStart(2,'0')} · ${game.level.name}`;const hint=game.message||game.level.hint;if($('#hint').textContent!==hint)$('#hint').textContent=hint; }
 function overlay(title,copy,button){clearInput();$('#overlay').hidden=false;$('#overlay-title').textContent=title;$('#overlay-copy').textContent=copy;$('#continue').textContent=button;$('#restart').hidden=false;$('#overlay-number').textContent=`${String(game.index+1).padStart(2,'0')} / ${String(levels.length).padStart(2,'0')} · ${game.level.name}`;}
-function start(nextMode='playing'){mode=nextMode;$('#overlay').hidden=true;document.activeElement?.blur();$('#pause').textContent='Ⅱ';$('#pause').setAttribute('aria-label','Pausar jogo');clearInput();}
+function start(nextMode='playing'){unlockSound();mode=nextMode;$('#overlay').hidden=true;document.activeElement?.blur();$('#pause').textContent='Ⅱ';$('#pause').setAttribute('aria-label','Pausar jogo');clearInput();}
 function pause(){if(mode==='playing'||mode==='finale'){pausedMode=mode;mode='paused';overlay('Uma pausa no galho.','A árvore espera por você.','CONTINUAR');if(pausedMode==='finale')$('#restart').hidden=true;$('#pause').textContent='▶';$('#pause').setAttribute('aria-label','Continuar jogo');}else if(mode==='paused')start(pausedMode);}
 function beginFinale(alreadyWon=false){
   clearInput();game.load(levels.length-1);mode='finale';finaleElapsed=alreadyWon?FINALE_DURATION:0;
@@ -31,7 +45,7 @@ function beginFinale(alreadyWon=false){
   if(alreadyWon)showVictory();
 }
 function showVictory(){
-  mode='won';if(!previewFinale){try{localStorage.setItem(victoryKey,'true');}catch{}}
+  mode='won';sound.setActive(false);sound.effect({type:'victory'});if(!preview){try{localStorage.setItem(victoryKey,String(levels.length));}catch{}}
   overlay('Você ganhou!','Você chegou ao último andar e encontrou o céu.','VOLTAR AO MENU');
   $('#overlay-number').textContent='NO ALTO DA ÁRVORE';$('#restart').hidden=true;
   $('#overlay').classList.add('victory');$('#pause').disabled=true;
@@ -40,7 +54,7 @@ function showVictory(){
 }
 $('#pause').onclick=pause;
 $('#continue').onclick=()=>{if(mode==='won'){location.href='../';return;}if(mode==='paused'){start(pausedMode);return;}if(mode==='complete'){game.load(game.index+1);save();}start();hud();};
-$('#restart').onclick=()=>{game.load(0);save();start();hud();};
+$('#restart').onclick=()=>{game.load(0);if(!preview){try{localStorage.removeItem(victoryKey);}catch{}}save();start();hud();};
 for(const button of document.querySelectorAll('[data-key]')){
   button.addEventListener('pointerdown',e=>{e.preventDefault();if(mode!=='playing')return;button.setPointerCapture(e.pointerId);held.set(e.pointerId,button.dataset.key);button.classList.add('held');if(button.dataset.key==='jump')jumpQueued=true;if(button.dataset.key==='action')actionQueued=true;});
   const release=e=>{held.delete(e.pointerId);button.classList.remove('held');};
@@ -53,9 +67,10 @@ window.addEventListener('blur',()=>{clearInput();if(mode==='playing'||mode==='fi
 document.addEventListener('visibilitychange',()=>{if(document.hidden){clearInput();if(mode==='playing'||mode==='finale')pause();}});
 function frame(now){const dt=Math.min((now-last)/1000,1/30);last=now;if(mode==='playing'){
   const input=Object.fromEntries([...keyboard,...held.values()].map(k=>[k,true]));input.jump=jumpQueued;input.action=actionQueued;jumpQueued=actionQueued=false;
-  game.step(dt,input);hud();if(game.complete){mode=destinationAfterExit(game.index,levels.length);if(mode==='finale')beginFinale();else{overlay('Mais perto do céu.',`Andar ${game.index+1} concluído. Vamos descobrir o próximo?`,'PRÓXIMO ANDAR');$('#continue').focus();}}
+  game.step(dt,input);for(const event of game.drainEvents())sound.effect(event);hud();if(game.complete){mode=destinationAfterExit(game.index,levels.length);if(mode==='finale')beginFinale();else{overlay('Mais perto do céu.',`Andar ${game.index+1} concluído. Vamos descobrir o próximo?`,'PRÓXIMO ANDAR');$('#continue').focus();}}
 }
 if(mode==='finale'){finaleElapsed+=dt;if(finalePose(finaleElapsed).won)showVictory();}
+sound.setActive(mode==='playing'||mode==='finale');sound.update();
 if(art){if(mode==='finale'||mode==='won'||(mode==='paused'&&pausedMode==='finale'))renderFinale(ctx,art,finalePose(finaleElapsed,reducedMotion.matches));else render(ctx,game,art);}
 requestAnimationFrame(frame);}
 hud();
