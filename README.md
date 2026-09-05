@@ -52,7 +52,7 @@ node --check treehouse/app.mjs
 
 26 testes verificam os dez percursos, bloqueios, ações explícitas, eventos sonoros, perseguição temporal, fuga, recuperação após captura, passagem temporizada e encerramento. [Relatório de validação visual e limitações](docs/validation.md).
 
-Depois da vitória o jogo permanece concluído, sem retornar ao primeiro andar; `treehouse/?finale=1` permite ver a cena sem alterar o progresso.
+Depois da vitória, voltar ao menu limpa a fase salva e a marca de conclusão, preparando uma nova partida no primeiro andar. Sair no meio da subida preserva o progresso; `treehouse/?finale=1` permite ver a cena sem alterar o progresso.
 
 ## Publicação
 

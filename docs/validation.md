@@ -1,5 +1,13 @@
 # Validação do MVP — 5 de setembro de 2026
 
+## Correção: toque longo e nova partida após vitória
+
+CSS `user-select: none`, prefixo WebKit e `-webkit-touch-callout: none` aplicados à interface do jogo; `selectstart` e `contextmenu` cancelados dentro dela. Controles mantêm captura de ponteiro, cancelamento, teclado e foco. Ao sair da vitória pelo botão ou pelo menu do cabeçalho, somente as duas chaves de progresso/conclusão da árvore são removidas. Partida incompleta, preferência sonora e atalhos de preview são preservados.
+
+Chrome conectado em 390×844, 360×800 e 1366×768: botões >=44 px, sem overflow, seleção vazia e eventos de menu/seleção cancelados. Movimento mantido por 800 ms, cancelamento parou o movimento, pulo e soltura funcionaram com ponteiro sintético. Tentativa de simular um segundo ponteiro inexistente foi rejeitada por `setPointerCapture`; isso limita esse teste, não representa uma falha com ponteiro real. Multitouch real e o menu nativo de iOS/Android não foram validados em aparelho físico; Firefox/WebKit não executados.
+
+Regressão de persistência no navegador: vitória salva → botão VOLTAR AO MENU → duas chaves ausentes → entrada no andar 1. Menu do cabeçalho após vitória também limpa. Saída no andar 6 mantém progresso 5; `?finale=1` conclui sem apagar essa partida; mute permanece salvo. Os 26 testes existentes, sintaxe de app e `git diff --check` passaram. Nenhuma dependência adicionada.
+
 ## Revisão atual: personagem, parkour, gravidade e ritmo
 
 26 testes aprovados. Percursos dos dez andares executam caminhada, escada, saltos e ações no motor, sem teletransporte nos testes de resolução. Novas verificações comparam tempo de voo normal/lunar/pesado, gravidade em objetos, três impactos para soltar a chave, ausência de impactos ao ficar em pé, pouso da chave e igualdade entre grupos rítmicos e solução. O encerramento mantém os três testes anteriores e sua animação não foi alterada.

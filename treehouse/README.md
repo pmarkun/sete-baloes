@@ -2,7 +2,7 @@
 
 Cada andar tem seu próprio arquivo em `levels/01-first-branches.mjs` até `levels/10-constellation.mjs`. `levels/index.mjs` registra a ordem; `levels.mjs` mantém o ponto de importação. `components.mjs` fornece as fábricas reutilizáveis. `physics.mjs` compartilha gravidade, colisões, objetos em queda e impactos. `engine.mjs` controla física e puzzles sem DOM. `render.mjs` usa o atlas e o fundo. `app.mjs` liga teclado, ponteiros, pausa, progressão e armazenamento à interface HTML.
 
-Ao sair do último andar (atualmente o décimo), `finale.mjs` conduz a cena da copa: a menina repousa sobre as folhas por 2,5 segundos, sobe ao céu e recebe a mensagem de vitória aos 6 segundos. A vitória permanece salva neste navegador, inclusive após recarregar; a única ação no encerramento volta ao menu. Não há reinício do primeiro andar nesse fluxo. Com redução de movimento, a cena fica estática e a mensagem aparece no mesmo intervalo.
+Ao sair do último andar (atualmente o décimo), `finale.mjs` conduz a cena da copa: a menina repousa sobre as folhas por 2,5 segundos, sobe ao céu e recebe a mensagem de vitória aos 6 segundos. A vitória permanece salva neste navegador, inclusive após recarregar; voltar ao menu pelo botão de vitória ou pelo cabeçalho limpa a fase salva e a marca de vitória. A próxima entrada começa no primeiro andar. A tela de vitória permanece até essa saída explícita. Com redução de movimento, a cena fica estática e a mensagem aparece no mesmo intervalo.
 
 Para inspecionar a animação sem jogar nem alterar o progresso salvo, abra `?finale=1`. Verifique a lógica com `node treehouse/finale.test.mjs`.
 

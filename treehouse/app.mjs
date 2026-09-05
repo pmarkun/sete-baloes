@@ -32,6 +32,13 @@ let jumpQueued=false,actionQueued=false;
 const keys = {ArrowLeft:'left',a:'left',ArrowRight:'right',d:'right',ArrowUp:'up',w:'up',ArrowDown:'down',s:'down',' ':'jump',e:'action'};
 function clearInput(){held.clear();keyboard.clear();jumpQueued=false;actionQueued=false;document.querySelectorAll('.held').forEach(b=>b.classList.remove('held'));}
 function save(){if(preview)return;try{localStorage.setItem(storageKey,String(game.index));}catch{}}
+function resetCompletedRun(){
+  if(mode!=='won'||preview)return;
+  for(const key of [storageKey,victoryKey]){try{localStorage.removeItem(key);}catch{}}
+}
+// Both routes back to the menu prepare a fresh game after a completed run.
+$('header a').addEventListener('click',resetCompletedRun);
+for(const type of ['contextmenu','selectstart'])$('.shell').addEventListener(type,e=>e.preventDefault());
 function hud(){ $('#floor').textContent=game.inPast?'04 / 10':`${String(game.index+1).padStart(2,'0')} / ${String(levels.length).padStart(2,'0')} · ${game.level.name}`;$('#hint').hidden=true; }
 function overlay(title,copy,button){clearInput();$('#overlay').hidden=false;$('#overlay-title').textContent=title;$('#overlay-copy').textContent=copy;$('#continue').textContent=button;$('#restart').hidden=false;$('#overlay-number').textContent=`${String(game.index+1).padStart(2,'0')} / ${String(levels.length).padStart(2,'0')} · ${game.level.name}`;}
 function start(nextMode='playing'){unlockSound();mode=nextMode;$('#overlay').hidden=true;document.activeElement?.blur();$('#pause').textContent='Ⅱ';$('#pause').setAttribute('aria-label','Pausar jogo');clearInput();}
@@ -54,7 +61,7 @@ function showVictory(){
   $('#continue').focus();
 }
 $('#pause').onclick=pause;
-$('#continue').onclick=()=>{if(mode==='won'){location.href='../';return;}if(mode==='paused'){start(pausedMode);return;}if(mode==='complete'){game.load(game.index+1);save();}start();hud();};
+$('#continue').onclick=()=>{if(mode==='won'){resetCompletedRun();location.href='../';return;}if(mode==='paused'){start(pausedMode);return;}if(mode==='complete'){game.load(game.index+1);save();}start();hud();};
 $('#restart').onclick=()=>{game.load(0);if(!preview){try{localStorage.removeItem(victoryKey);}catch{}}save();start();hud();};
 for(const button of document.querySelectorAll('[data-key]')){
   button.addEventListener('pointerdown',e=>{e.preventDefault();if(mode!=='playing')return;button.setPointerCapture(e.pointerId);held.set(e.pointerId,button.dataset.key);button.classList.add('held');if(button.dataset.key==='jump')jumpQueued=true;if(button.dataset.key==='action')actionQueued=true;});
