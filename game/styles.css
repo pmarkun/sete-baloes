@@ -77,8 +77,42 @@ button {
   transition: opacity 180ms steps(3, end), visibility 180ms;
 }
 
-.intertitle::before,
-.intertitle::after {
+.intertitle__panel {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+}
+
+.intertitle.is-transition {
+  padding-inline: 18px;
+  background: rgba(8, 7, 13, 0.22);
+}
+
+.intertitle.is-transition .intertitle__panel {
+  max-width: 340px;
+  padding: 25px 20px 22px;
+  border: 1px solid rgba(214, 168, 75, 0.5);
+  background:
+    repeating-linear-gradient(0deg, transparent 0 3px, rgba(233, 223, 203, 0.018) 3px 4px),
+    rgba(11, 9, 17, 0.88);
+  box-shadow: 6px 6px 0 rgba(8, 7, 13, 0.55);
+}
+
+.intertitle.is-transition .intertitle__ornament {
+  margin-bottom: 10px;
+}
+
+.intertitle.is-transition #story-copy {
+  min-height: 0;
+}
+
+.intertitle.is-transition #continue-button {
+  margin-top: 20px;
+}
+
+.intertitle:not(.is-transition)::before,
+.intertitle:not(.is-transition)::after {
   content: "";
   position: absolute;
   left: 12%;
@@ -88,8 +122,8 @@ button {
   border-bottom: 1px solid rgba(214, 168, 75, 0.25);
 }
 
-.intertitle::before { top: 13%; }
-.intertitle::after { bottom: 13%; }
+.intertitle:not(.is-transition)::before { top: 13%; }
+.intertitle:not(.is-transition)::after { bottom: 13%; }
 
 .intertitle.is-visible {
   opacity: 1;

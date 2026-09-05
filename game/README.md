@@ -18,6 +18,8 @@ Para testar uma fase específica, use `http://localhost:4173/?stage=N`, de `0` a
 
 Para combinar fase e dificuldade durante o desenvolvimento, use `?stage=2&difficulty=hell`. O final alternativo pode ser visto em `?difficulty=hell#finale`.
 
+Para inspecionar um intertítulo com a transição viva do céu, use `?transition=N`, de `1` a `4`.
+
 ## Controles
 
 - Celular: toque em qualquer lugar da área do jogo e arraste para a esquerda ou direita. O direcional aparece onde o dedo encostar.
@@ -38,4 +40,4 @@ Cada zona dura entre 32 e 45 segundos e tem um intertítulo narrativo. A cena fi
 
 Na V2, os aviões atravessam a altura do jogador e obrigam deslocamento lateral; os alienígenas aparecem apenas pilotando os discos voadores; os balões têm silhueta simples e ficam presos à cintura do padre.
 
-Na V3, o jogo ganha três dificuldades (`FÁCIL`, `NORMAL` e `HELL`), avião mais lento no Normal, controle flutuante por arrasto, modo preto e branco, trilha procedural 8-bit e um final exclusivo no Hell.
+Na V3, o jogo ganha três dificuldades (`FÁCIL`, `NORMAL` e `HELL`), aviões que descem em trajetórias desviáveis, controle flutuante por arrasto, modo preto e branco, trilha procedural 8-bit, intertítulos sobre o céu em movimento e um final exclusivo no Hell.

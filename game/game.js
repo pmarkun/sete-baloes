@@ -69,8 +69,8 @@
     {
       name: "CORREDOR AÉREO",
       duration: 40,
-      spawn: 1.05,
-      speed: [44, 58],
+      spawn: 1.55,
+      speed: [32, 42],
       types: ["biplane", "jet"],
       chapter: "III — O CÉU DOS HOMENS",
       title: "MÁQUINAS COM ASAS",
@@ -128,10 +128,19 @@
   let musicTimer = null;
   let musicStep = 0;
   let difficulty = difficulties.normal;
+  let skyTransition = null;
   const touch = { active: false, pointerId: null, originX: 0, currentX: 0 };
 
   const random = (min, max) => min + Math.random() * (max - min);
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+  const mix = (from, to, amount) => from + (to - from) * amount;
+
+  function mixColor(from, to, amount) {
+    const parse = (color) => [1, 3, 5].map((offset) => Number.parseInt(color.slice(offset, offset + 2), 16));
+    const a = parse(from);
+    const b = parse(to);
+    return `rgb(${a.map((channel, index) => Math.round(mix(channel, b[index], amount))).join(",")})`;
+  }
 
   function initStars() {
     stars = Array.from({ length: 42 }, () => ({
@@ -163,7 +172,8 @@
   }
 
   function playMusicStep() {
-    if (!audio || state !== "playing") return;
+    const duringSkyTransition = state === "story" && skyTransition;
+    if (!audio || (state !== "playing" && !duringSkyTransition)) return;
     const melody = [110, 0, 123.47, 110, 82.41, 0, 103.83, 92.5, 110, 146.83, 0, 123.47, 77.78, 82.41, 0, 61.74];
     const note = melody[musicStep % melody.length];
     if (note) tone(note, 0.16, 0.012, "square");
@@ -210,6 +220,7 @@
     const showSetup = (action === "start-stage" && stageIndex === 0) || action === "restart";
     difficultySelector.hidden = !showSetup;
     hintEl.hidden = !showSetup;
+    overlay.classList.toggle("is-transition", (action === "start-stage" && stageIndex > 0) || action === "show-finale");
     overlay.classList.add("is-visible");
     shell.classList.remove("is-playing");
   }
@@ -227,6 +238,7 @@
     altitude = 0;
     hazards = [];
     particles = [];
+    skyTransition = null;
     player.x = W / 2;
     player.invulnerable = 0;
   }
@@ -237,6 +249,7 @@
     spawnTimer = 0.7;
     hazards = [];
     player.invulnerable = Math.min(1.5, difficulty.invulnerability);
+    skyTransition = null;
     hideStory();
     tone(110 + stageIndex * 18, 0.35, 0.025, "sine");
     startMusic();
@@ -270,26 +283,26 @@
     const specs = {
       bird: { w: 18, h: 13 },
       bigBird: { w: 27, h: 19 },
-      biplane: { w: 35, h: 18 },
-      jet: { w: 38, h: 17 },
+      biplane: { w: 32, h: 15 },
+      jet: { w: 34, h: 14 },
       satellite: { w: 24, h: 25 },
       ufo: { w: 31, h: 16 },
       alien: { w: 13, h: 26 }
     }[type];
-    const horizontal = type === "biplane" || type === "jet";
+    const aircraft = type === "biplane" || type === "jet";
     const direction = Math.random() > 0.5 ? 1 : -1;
     hazards.push({
       type,
-      x: horizontal ? (direction > 0 ? -specs.w : W + specs.w) : random(3, W - specs.w - 3),
-      y: horizontal ? player.y - specs.h / 2 + random(-4, 4) : -specs.h - 3,
+      x: random(5, W - specs.w - 5),
+      y: -specs.h - 3,
       w: specs.w,
       h: specs.h,
-      vy: horizontal ? random(-1.2, 1.2) : random(...stage.speed) * difficulty.speed,
-      vx: horizontal ? direction * random(30, 40) * difficulty.speed : random(-9, 9) * difficulty.speed,
-      rotation: random(-0.08, 0.08),
+      vy: random(...stage.speed) * difficulty.speed,
+      vx: (aircraft ? direction * random(3, 7) : random(-9, 9)) * difficulty.speed,
+      rotation: aircraft ? direction * random(0.06, 0.13) : random(-0.08, 0.08),
       spin: type === "satellite" ? random(-1.4, 1.4) : 0,
       flip: direction < 0,
-      huntsPlayer: horizontal
+      huntsPlayer: false
     });
   }
 
@@ -331,8 +344,10 @@
   }
 
   function finishStage() {
+    const previousStage = stageIndex;
     stageIndex += 1;
     hazards = [];
+    skyTransition = { from: previousStage, to: stageIndex, elapsed: 0, duration: 3.2 };
     if (stageIndex >= stages.length) {
       showStory(finaleStory, "show-finale");
     } else {
@@ -357,6 +372,11 @@
       particle.life -= dt;
       return particle.life > 0;
     });
+
+    if (state === "story" && skyTransition) {
+      skyTransition.elapsed = Math.min(skyTransition.duration, skyTransition.elapsed + dt);
+      altitude += dt * 9;
+    }
 
     if (state !== "playing") return;
 
@@ -395,7 +415,14 @@
 
   function drawSky() {
     const colors = ["#17152b", "#1c1933", "#24203e", "#2d274a", "#352e53", "#40355f"];
-    const color = colors[Math.min(stageIndex, colors.length - 1)];
+    const transitionProgress = skyTransition
+      ? Math.min(1, skyTransition.elapsed / skyTransition.duration)
+      : 1;
+    const easedProgress = transitionProgress * transitionProgress * (3 - 2 * transitionProgress);
+    const visualStage = skyTransition ? mix(skyTransition.from, skyTransition.to, easedProgress) : stageIndex;
+    const fromColor = colors[Math.min(skyTransition?.from ?? stageIndex, colors.length - 1)];
+    const toColor = colors[Math.min(skyTransition?.to ?? stageIndex, colors.length - 1)];
+    const color = mixColor(fromColor, toColor, easedProgress);
     ctx.fillStyle = color;
     ctx.fillRect(0, 0, W, H);
 
@@ -410,7 +437,7 @@
     stars.forEach((star) => {
       const flicker = Math.sin(star.phase * 2.2) > 0.8;
       ctx.fillStyle = flicker ? "#d6a84b" : "#9a86ad";
-      ctx.globalAlpha = 0.42 + stageIndex * 0.08;
+      ctx.globalAlpha = 0.42 + visualStage * 0.08;
       ctx.fillRect(Math.floor(star.x), Math.floor(star.y), star.size, flicker ? star.size + 1 : star.size);
     });
     ctx.globalAlpha = 1;
@@ -420,7 +447,7 @@
     ctx.globalAlpha = 0.25;
     for (let row = -1; row < 5; row += 1) {
       const y = row * 72 + cloudOffset;
-      const x = ((row * 37 + stageIndex * 11) % 90) - 20;
+      const x = ((row * 37 + visualStage * 11) % 90) - 20;
       ctx.fillRect(x, y, 48, 2);
       ctx.fillRect(x + 7, y - 2, 24, 2);
       ctx.fillRect(x + 63, y + 8, 29, 2);
@@ -700,8 +727,14 @@
     monochromeButton.setAttribute("aria-label", "P&B — desativar modo preto e branco");
   }
   const stageParam = urlParams.get("stage");
+  const transitionParam = urlParams.get("transition");
   const previewStage = stageParam === null ? Number.NaN : Number(stageParam);
-  if (Number.isInteger(previewStage) && previewStage >= 0 && previewStage < stages.length) {
+  const previewTransition = transitionParam === null ? Number.NaN : Number(transitionParam);
+  if (Number.isInteger(previewTransition) && previewTransition > 0 && previewTransition < stages.length) {
+    stageIndex = previewTransition;
+    skyTransition = { from: stageIndex - 1, to: stageIndex, elapsed: 0, duration: 3.2 };
+    showStory(stages[stageIndex], "start-stage");
+  } else if (Number.isInteger(previewStage) && previewStage >= 0 && previewStage < stages.length) {
     stageIndex = previewStage;
     stageTime = 0;
     spawnTimer = 0.2;
