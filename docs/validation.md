@@ -1,5 +1,13 @@
 # Validação do MVP — 5 de setembro de 2026
 
+## Expansão atual: andares 11 e 12
+
+34 testes aprovados, incluindo oito novos: lampião obrigatório antes da saída do andar 10 e restaurado no 11; percurso completo de parkour e espinhos; reinício local após contato; surgimento da criatura na segunda plataforma; imobilidade na luz/movimento no escuro; captura e nova tentativa; fuga completa; perseguição pelas escadas para baixo; intervalos do ciclo. Os testes de vitória agora identificam o andar 12 como último.
+
+Chrome conectado em 390×844, 360×800, 768×1024 e 1366×768: botões >=44 px e sem overflow horizontal. Screenshots da auréola e da criatura na luz foram inspecionados. Leitura de pixels confirmou preto opaco fora da auréola e na fase escura; área próxima da personagem iluminada; modo de redução de movimento mantém o cenário visível com escurecimento constante. Pausa congelou relógio e posição da criatura. Migração com vitória antiga 10 abriu 11/12. Um percurso do andar 12, acelerado pelo mesmo motor no navegador, chegou à copa, gravou vitória 12 e limpou progresso/conclusão ao voltar ao menu. Atlas com alpha real, 1.058.542 pixels transparentes, sem dependências novas.
+
+Limitações: sem aparelhos físicos iOS/Android, Firefox ou WebKit; sem avaliação acústica dos novos efeitos em alto-falantes físicos. Percursos completos validados no motor, sem teletransporte nos testes de resolução; o navegador usa estado controlado para inspecionar luz, escuridão e pausa. Um aviso de desempenho de getImageData foi produzido pela instrumentação de QA, não pelo jogo. A auréola não calcula sombras por obstáculos: o campo de visão é radial, como solicitado.
+
 ## Correção: toque longo e nova partida após vitória
 
 CSS `user-select: none`, prefixo WebKit e `-webkit-touch-callout: none` aplicados à interface do jogo; `selectstart` e `contextmenu` cancelados dentro dela. Controles mantêm captura de ponteiro, cancelamento, teclado e foco. Ao sair da vitória pelo botão ou pelo menu do cabeçalho, somente as duas chaves de progresso/conclusão da árvore são removidas. Partida incompleta, preferência sonora e atalhos de preview são preservados.

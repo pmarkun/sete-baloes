@@ -54,9 +54,9 @@ test('expired timed hatch can be descended and reopened, without a softlock',()=
   const g=new Game(9);climb(g,175,250);climb(g,65,160);walk(g,110);action(g);climb(g,175,70);
   tick(g,{},800);assert.equal(g.flags.timer,false);climb(g,175,160);walk(g,110);action(g);assert.ok(g.flags.timer);
 });
-test('only floor 10 leads to the canopy now',()=>{
-  assert.equal(levels.length,10);assert.equal(destinationAfterExit(4,levels.length),'complete');
-  assert.equal(destinationAfterExit(9,levels.length),'finale');
+test('only floor 12 leads to the canopy now',()=>{
+  assert.equal(levels.length,12);assert.equal(destinationAfterExit(4,levels.length),'complete');
+  assert.equal(destinationAfterExit(9,levels.length),'complete');assert.equal(destinationAfterExit(11,levels.length),'finale');
 });
 test('accepted jumps and an opened hatch emit their distinct sound events',()=>{
   const g=new Game(3);tick(g,{jump:true});assert.ok(g.drainEvents().some(e=>e.type==='jump'));

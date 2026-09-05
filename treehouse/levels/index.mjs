@@ -8,4 +8,6 @@ import music from './07-listening-room.mjs';
 import plants from './08-living-stairs.mjs';
 import past from './09-return.mjs';
 import stars from './10-constellation.mjs';
-export const levels = [first,gaps,bridge,exit,moon,heavy,music,plants,past,stars];
+import lantern from './11-lantern.mjs';
+import watch from './12-night-watch.mjs';
+export const levels = [first,gaps,bridge,exit,moon,heavy,music,plants,past,stars,lantern,watch];

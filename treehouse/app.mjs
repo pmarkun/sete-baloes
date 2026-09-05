@@ -18,6 +18,8 @@ try {
   savedVictory = won === String(levels.length);
   // The old five-floor ending unlocks the newly added sixth floor.
   if(won==='true')saved=Math.max(saved,5);
+  const previousEnding=Number(won);
+  if(Number.isInteger(previousEnding)&&previousEnding>0&&previousEnding<levels.length)saved=Math.max(saved,previousEnding);
 } catch {}
 if(preview&&!previewFinale){saved=previewFloor-1;savedVictory=false;}
 const game = new Game(saved), canvas=$('canvas'), ctx=canvas.getContext('2d');
@@ -39,7 +41,7 @@ function resetCompletedRun(){
 // Both routes back to the menu prepare a fresh game after a completed run.
 $('header a').addEventListener('click',resetCompletedRun);
 for(const type of ['contextmenu','selectstart'])$('.shell').addEventListener(type,e=>e.preventDefault());
-function hud(){ $('#floor').textContent=game.inPast?'04 / 10':`${String(game.index+1).padStart(2,'0')} / ${String(levels.length).padStart(2,'0')} · ${game.level.name}`;$('#hint').hidden=true; }
+function hud(){ $('#floor').textContent=`${String(game.index+1).padStart(2,'0')} / ${String(levels.length).padStart(2,'0')}${game.inPast?'':` · ${game.level.name}`}`;$('#hint').hidden=true; }
 function overlay(title,copy,button){clearInput();$('#overlay').hidden=false;$('#overlay-title').textContent=title;$('#overlay-copy').textContent=copy;$('#continue').textContent=button;$('#restart').hidden=false;$('#overlay-number').textContent=`${String(game.index+1).padStart(2,'0')} / ${String(levels.length).padStart(2,'0')} · ${game.level.name}`;}
 function start(nextMode='playing'){unlockSound();mode=nextMode;$('#overlay').hidden=true;document.activeElement?.blur();$('#pause').textContent='Ⅱ';$('#pause').setAttribute('aria-label','Pausar jogo');clearInput();}
 function pause(){if(mode==='playing'||mode==='finale'){pausedMode=mode;mode='paused';overlay('Uma pausa no galho.','A árvore espera por você.','CONTINUAR');if(pausedMode==='finale')$('#restart').hidden=true;$('#pause').textContent='▶';$('#pause').setAttribute('aria-label','Continuar jogo');}else if(mode==='paused')start(pausedMode);}

@@ -75,6 +75,9 @@ export class Soundscape {
     else if(type==='bell')this.tone([0,72,76,79][value],.6,.18,'sine');
     else if(type==='portal'){[60,67,74,81].forEach((n,i)=>this.tone(n,.35,.1,'sine',now+i*.075));}
     else if(type==='caught'){this.tone(67,.35,.1,'triangle',now,-12);}
+    else if(type==='creature'){this.tone(38,.6,.12,'triangle',now,-5);this.tone(73,.18,.06,'square',now+.3);}
+    else if(type==='powerOff')this.tone(50,.24,.09,'triangle',now,-18);
+    else if(type==='powerOn')this.tone(42,.18,.08,'triangle',now,12);
     else if(type==='grow'){[60,64,67,72,76].forEach((n,i)=>this.tone(n,.22,.10,'triangle',now+i*.08));}
     else if(type==='victory'){[72,76,79,84].forEach((n,i)=>this.tone(n,.7,.14,'triangle',now+i*.16));}
     else {this.tone(79,.15,.1,'sine');this.tone(84,.26,.08,'sine',now+.1);}

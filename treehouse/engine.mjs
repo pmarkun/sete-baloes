@@ -1,5 +1,6 @@
 import { levels } from './levels.mjs';
 import { landingSurface, impact, updateObjects } from './physics.mjs';
+import { updateNight } from './night.mjs';
 import { thiefPose, pastSelfPose, PORTAL_X, LEDGE_Y } from './temporal.mjs';
 export const WIDTH = 240, HEIGHT = 360;
 export class Game {
@@ -8,7 +9,8 @@ export class Game {
     this.index = Math.max(0, Math.min(levels.length - 1, index));
     this.level = structuredClone(levels[this.index]);
     this.player = { ...this.level.spawn, vy: 0, grounded: true, climbing: false, facing: 1, moving: false };
-    this.flags = {}; this.complete = false; this.time = 0;
+    this.flags = {...this.level.entryFlags}; this.complete = false; this.time = 0;
+    this.hunter=null;this.hazardRetry=0;this.lastDark=false;
     this.events = []; this.sequence = []; this.timer = 0; this.shake = 0;
     this.inPast = false; this.returnState = null; this.temporalClock = 0;
     this.theftClock = null; this.ghost = null; this.pastSelf = null; this.retryDelay = 0;
@@ -96,6 +98,7 @@ export class Game {
   }
   step(dt, input = {}) {
     if (this.complete) return;
+    if(this.hazardRetry>0){this.hazardRetry-=Math.min(dt,1/30);if(this.hazardRetry<=0)this.load(this.index);return;}
     if(this.retryDelay>0){this.retryDelay-=dt;if(this.retryDelay<=0){const snapshot=this.returnState;this.load(3);this.inPast=true;this.returnState=snapshot;this.flags={hatch:true,cloak:true};this.player={...this.player,x:PORTAL_X,y:LEDGE_Y};this.emit('portal');}return;}
     dt = Math.min(dt, 1 / 30); this.time += dt;
     if(this.timer>0){this.timer=Math.max(0,this.timer-dt);if(!this.timer){this.flags.timer=false;this.emit('hatch');}}
@@ -120,12 +123,13 @@ export class Game {
       if(s){impact(this,p.vy);p.y=s.y;p.vy=0;p.grounded=true;}
     }
     updateObjects(this,dt);
-    for (const o of this.level.objects) if (['key','seed','crystal'].includes(o.type) && !o.suspended && !o.collected && Math.abs(p.x - o.x) < 13 && Math.abs(p.y - 12 - o.y) < 16) {
+    for (const o of this.level.objects) if (['key','seed','crystal','lantern'].includes(o.type) && !o.suspended && !o.collected && Math.abs(p.x - o.x) < 13 && Math.abs(p.y - 12 - o.y) < 16) {
       o.collected = true; this.emit('key');
       if(o.type==='crystal'){this.flags.crystalCount=(this.flags.crystalCount||0)+1;this.flags.crystals=this.flags.crystalCount===3;}
       else {this.flags[o.type] = true; }
     }
-    if (input.action) this.interact();
+    updateNight(this,dt);
+    if (input.action&&!this.hazardRetry) this.interact();
     if(!this.complete)this.updateTemporal(dt);
   }
 }

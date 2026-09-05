@@ -1,8 +1,8 @@
 # Biblioteca da Casa na Árvore
 
-Cada andar tem seu próprio arquivo em `levels/01-first-branches.mjs` até `levels/10-constellation.mjs`. `levels/index.mjs` registra a ordem; `levels.mjs` mantém o ponto de importação. `components.mjs` fornece as fábricas reutilizáveis. `physics.mjs` compartilha gravidade, colisões, objetos em queda e impactos. `engine.mjs` controla física e puzzles sem DOM. `render.mjs` usa o atlas e o fundo. `app.mjs` liga teclado, ponteiros, pausa, progressão e armazenamento à interface HTML.
+Cada andar tem seu próprio arquivo em `levels/01-first-branches.mjs` até `levels/12-night-watch.mjs`. `levels/index.mjs` registra a ordem; `levels.mjs` mantém o ponto de importação. `components.mjs` fornece as fábricas reutilizáveis. `physics.mjs` compartilha gravidade, colisões, objetos em queda e impactos. `engine.mjs` controla física e puzzles sem DOM. `render.mjs` usa o atlas e o fundo. `app.mjs` liga teclado, ponteiros, pausa, progressão e armazenamento à interface HTML.
 
-Ao sair do último andar (atualmente o décimo), `finale.mjs` conduz a cena da copa: a menina repousa sobre as folhas por 2,5 segundos, sobe ao céu e recebe a mensagem de vitória aos 6 segundos. A vitória permanece salva neste navegador, inclusive após recarregar; voltar ao menu pelo botão de vitória ou pelo cabeçalho limpa a fase salva e a marca de vitória. A próxima entrada começa no primeiro andar. A tela de vitória permanece até essa saída explícita. Com redução de movimento, a cena fica estática e a mensagem aparece no mesmo intervalo.
+Ao sair do último andar (atualmente o décimo segundo), `finale.mjs` conduz a cena da copa: a menina repousa sobre as folhas por 2,5 segundos, sobe ao céu e recebe a mensagem de vitória aos 6 segundos. A vitória permanece salva neste navegador, inclusive após recarregar; voltar ao menu pelo botão de vitória ou pelo cabeçalho limpa a fase salva e a marca de vitória. A próxima entrada começa no primeiro andar. A tela de vitória permanece até essa saída explícita. Com redução de movimento, a cena fica estática e a mensagem aparece no mesmo intervalo.
 
 Para inspecionar a animação sem jogar nem alterar o progresso salvo, abra `?finale=1`. Verifique a lógica com `node treehouse/finale.test.mjs`.
 
@@ -28,7 +28,7 @@ Mundo lógico: 240 × 360. Origem no canto superior esquerdo, y aumenta para bai
 
 Para adicionar um andar, crie um arquivo em `levels/` exportando um objeto baseado em `base()`, com `name`, `spawn`, `platforms`, `ladders`, `objects` e `door`. Registre o import em `levels/index.mjs`. Não adicione `hint`: as pistas devem estar nos objetos, sons e suas reações. Use flags distintas para mecanismos independentes. Inclua um teste de percurso que caminhe, pule e escale até a saída; não teletransporte a personagem no teste de resolução. O inventário reinicia entre andares.
 
-Limites do MVP: uma chave comum por andar; sem editor visual. Algumas flags e regras dos novos puzzles (`weight`, `song`, três cristais) são convencionais e documentadas acima. O contador acompanha a lista de fases; os textos narrativos descrevem dez andares.
+Limites do MVP: uma chave comum por andar; sem editor visual. Algumas flags e regras dos novos puzzles (`weight`, `song`, três cristais) são convencionais e documentadas acima. O contador acompanha a lista de fases; os textos narrativos descrevem doze andares.
 
 ## Paradoxo temporal
 
@@ -65,3 +65,15 @@ Os recortes normalizados ficam em `render.mjs`. Colisões são definidas pelo mo
 ## Pista rítmica
 
 O andar 7 declara uma única sequência `[1,3,2]`, compartilhada por `melody` e `music.rhythm`. `rhythm.mjs` intercala dois ticks vazios entre grupos e sete adicionais ao fim; cada tick dura 0,32 s. A trilha troca a valsa por batidas de madeira sobre um fundo suave, com intervalo final de 3,2 s entre a última batida e a próxima repetição. Não há solução em texto na interface. Pausar e retomar reinicia o ciclo; mudar de fase restaura a valsa. O botão ♪ silencia também esta pista, portanto é preciso reativá-lo para ouvi-la.
+
+## Lampião, espinhos e vigília
+
+O andar 10 coloca `object('lantern',145,58)` no caminho entre a última escada e a porta. A saída exige a coleta. O andar 11 declara `entryFlags:{lantern:true}`: a posse é garantida ao entrar, inclusive após recarregar, usar preview ou migrar uma vitória antiga. Não é um inventário global; esse contrato de entrada mantém o lampião nas tentativas sem afetar os outros puzzles.
+
+`lighting:{mode:'lantern',radius:52}` desenha uma máscara preta com abertura radial que acompanha a personagem. `object('spikes',x,y,{w})` tem colisão na faixa de oito unidades acima do piso. Contato congela a tentativa por 0,8 s e recarrega somente o andar atual. O parkour tem percurso físico testado, com quedas e saltos sobre espinhos.
+
+`lighting:{mode:'cycle',lightSeconds:3.5,darkSeconds:2.5,fade:.35}` controla a vigília no andar 12. O mesmo relógio da simulação define a máscara visual e a permissão de movimento da criatura. Pausar congela ambos. Com redução de movimento, o cenário permanece visível e escurecido de modo constante; um pequeno indicador mostra o ciclo, preservando a regra da perseguição.
+
+`hunter:{triggerY:250,spawn:{x:200,y:250},speed:46}` faz a criatura aparecer na segunda plataforma. O sistema reutilizável em `night.mjs` persegue no mesmo piso e usa as escadas do andar para subir ou descer. Captura durante o escuro reinicia só essa fase. A criatura é um guaxinim mecânico original, tributo à atmosfera de animatrônicos de FNAF. `creature`, `powerOff` e `powerOn` têm efeitos sintetizados próprios.
+
+Arte: `assets/night-objects.png`, duas poses da criatura e lampião. ImageGen integrado; [prompt e registro do asset](assets/night-objects.prompt.md). Espinhos e máscara de iluminação são geometria nativa de canvas.

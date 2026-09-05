@@ -1,3 +1,4 @@
+import { lightState } from './night.mjs';
 const regions = {
   key: [.80,.15,.14,.27], door: [.015,.51,.245,.37], lever: [.28,.59,.19,.25],
   platform: [.50,.68,.27,.13], ladder: [.80,.50,.15,.38],
@@ -8,11 +9,12 @@ const extras = {
   leaf:[.555,.633,.137,.13],
 };
 const character = {idle:[.105,.12,.19,.68],walk:[.395,.13,.23,.67],climb:[.70,.16,.21,.66]};
+const night = {hunter:[.03,.10,.31,.79],hunterWalk:[.375,.12,.415,.76],lantern:[.84,.56,.125,.33]};
 export async function loadArt() {
-  const images = await Promise.all(['tree-outward','sprites','canopy','time-objects-alpha','character-owl'].map(name => new Promise((resolve, reject) => {
+  const images = await Promise.all(['tree-outward','sprites','canopy','time-objects-alpha','character-owl','night-objects'].map(name => new Promise((resolve, reject) => {
     const img = new Image(); img.onload = () => resolve(img); img.onerror = () => reject(new Error(`Arte indisponível: ${name}`)); img.src = `assets/${name}.png`;
   })));
-  return { background: images[0], sprites: images[1], canopy: images[2], extras:images[3], character:images[4] };
+  return { background: images[0], sprites: images[1], canopy: images[2], extras:images[3], character:images[4],night:images[5] };
 }
 
 export function renderFinale(ctx, art, pose) {
@@ -30,7 +32,7 @@ export function render(ctx, game, art, {reducedMotion=false}={}) {
   if(game.shake&&!reducedMotion){ctx.fillStyle='#291c20';ctx.fillRect(0,0,240,360);ctx.translate(Math.round(Math.sin(game.time*93)*game.shake*11),Math.round(Math.cos(game.time*77)*game.shake*8));}
   ctx.drawImage(art.background, 0, 0, 240, 360);
   const sprite = (name,x,y,w,h,flip=false) => {
-    const r=character[name]||regions[name]||extras[name], img=character[name]?art.character:regions[name]?art.sprites:art.extras;
+    const r=night[name]||character[name]||regions[name]||extras[name], img=night[name]?art.night:character[name]?art.character:regions[name]?art.sprites:art.extras;
     ctx.save(); ctx.translate(Math.round(x + (flip ? w : 0)),Math.round(y)); if(flip) ctx.scale(-1,1);
     ctx.drawImage(img,r[0]*img.width,r[1]*img.height,r[2]*img.width,r[3]*img.height,0,0,w,h); ctx.restore();
   };
@@ -50,6 +52,8 @@ export function render(ctx, game, art, {reducedMotion=false}={}) {
   const d=game.level.door; sprite('door',d.x-12,d.y-34,24,35);
   if(d.requires.every(f=>game.flags[f])) {ctx.fillStyle='#efc878';ctx.fillRect(d.x+5,d.y-17,2,2);}
   for(const o of game.level.objects) {
+    if(o.type==='lantern'&&!o.collected)sprite('lantern',o.x-5,o.y-8,10,16);
+    if(o.type==='spikes')for(let x=o.x;x<o.x+o.w;x+=7){ctx.fillStyle='#c4bac8';ctx.beginPath();ctx.moveTo(x,o.y);ctx.lineTo(x+3,o.y-8);ctx.lineTo(Math.min(x+7,o.x+o.w),o.y);ctx.fill();}
     if(['key','exitKey'].includes(o.type)&&!o.collected){
       const wobble=o.shake&&!reducedMotion?Math.sin(game.time*60)*3:0;
       if(o.suspended){ctx.strokeStyle='#c6aa72';ctx.beginPath();ctx.moveTo(o.x,o.anchorY??o.y-32);ctx.lineTo(o.x+wobble,o.y-10);ctx.stroke();}
@@ -73,7 +77,20 @@ export function render(ctx, game, art, {reducedMotion=false}={}) {
   if(game.ghost)person(game.ghost,true);
   if(game.pastSelf)person(game.pastSelf);
   person(p,game.flags.cloak);
+  if(game.flags.lantern)sprite('lantern',p.x+(p.facing<0?-13:5),p.y-17,8,13);
+  if(game.hunter){const h=game.hunter;sprite(h.moving&&Math.floor(game.time*8)%2?'hunterWalk':'hunter',h.x-13,h.y-38,26,38,h.facing<0);}
   if(game.inPast){label('ANDAR 4 · PASSADO',120,19,'#bba9ff');if(game.flags.stolenKey)sprite('key',p.x+7,p.y-24,6,12);}
   if(game.timer>0)label(`${Math.ceil(game.timer)}s`,175,36,'#b7d895');
+  const lighting=game.level.lighting;
+  if(lighting?.mode==='lantern'){
+    const glow=ctx.createRadialGradient(p.x,p.y-18,12,p.x,p.y-18,lighting.radius);
+    glow.addColorStop(0,'rgba(0,0,0,0)');glow.addColorStop(.48,'rgba(0,0,0,.12)');glow.addColorStop(1,'#000');
+    ctx.fillStyle=glow;ctx.fillRect(0,0,240,360);
+  }else if(lighting?.mode==='cycle'){
+    const light=lightState(game.level,game.time);
+    // Reduced motion keeps the scene dim and steady; a small lamp indicates the cycle.
+    ctx.fillStyle=`rgba(0,0,0,${reducedMotion?.35:light.opacity})`;ctx.fillRect(0,0,240,360);
+    if(reducedMotion){ctx.fillStyle=light.dark?'#453628':'#e7c983';ctx.fillRect(116,12,8,5);}
+  }
   ctx.restore();
 }
