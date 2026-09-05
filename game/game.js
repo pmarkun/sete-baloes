@@ -590,7 +590,8 @@
   });
 
   initStars();
-  const previewStage = Number(new URLSearchParams(window.location.search).get("stage"));
+  const stageParam = new URLSearchParams(window.location.search).get("stage");
+  const previewStage = stageParam === null ? Number.NaN : Number(stageParam);
   if (Number.isInteger(previewStage) && previewStage >= 0 && previewStage < stages.length) {
     stageIndex = previewStage;
     stageTime = 0;
