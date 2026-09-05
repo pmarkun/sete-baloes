@@ -32,6 +32,7 @@ jobs:
       - name: Validar mecânicas e JavaScript
         run: |
           node treehouse/engine.test.mjs
+          node treehouse/finale.test.mjs
           node --check treehouse/app.mjs
           node --check treehouse/render.mjs
 

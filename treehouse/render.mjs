@@ -4,10 +4,20 @@ const regions = {
   platform: [.50,.68,.27,.13], ladder: [.80,.50,.15,.38],
 };
 export async function loadArt() {
-  const images = await Promise.all(['tree','sprites'].map(name => new Promise((resolve, reject) => {
+  const images = await Promise.all(['tree-outward','sprites','canopy'].map(name => new Promise((resolve, reject) => {
     const img = new Image(); img.onload = () => resolve(img); img.onerror = () => reject(new Error(`Arte indisponível: ${name}`)); img.src = `assets/${name}.png`;
   })));
-  return { background: images[0], sprites: images[1] };
+  return { background: images[0], sprites: images[1], canopy: images[2] };
+}
+
+export function renderFinale(ctx, art, pose) {
+  ctx.imageSmoothingEnabled = false;
+  // Extend the actual sky pixels above the background as the camera rises.
+  ctx.drawImage(art.canopy, 0, 0, art.canopy.width, art.canopy.height * .15, 0, 0, 240, 120);
+  ctx.drawImage(art.canopy, 0, Math.round(pose.canopyOffset), 240, 360);
+  const r = regions.idle, img = art.sprites;
+  ctx.drawImage(img, r[0]*img.width, r[1]*img.height, r[2]*img.width, r[3]*img.height,
+    108, Math.round(pose.girlY - 39), 24, 40);
 }
 export function render(ctx, game, art) {
   ctx.imageSmoothingEnabled = false;

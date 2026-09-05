@@ -1,12 +1,18 @@
 import { Game } from './engine.mjs';
 import { levels } from './levels.mjs';
-import { loadArt, render } from './render.mjs';
+import { loadArt, render, renderFinale } from './render.mjs';
+import { destinationAfterExit, finalePose, FINALE_DURATION } from './finale.mjs';
 const $ = s => document.querySelector(s);
 const storageKey = 'casa-na-arvore-progress-v1';
-let saved = 0;
+const victoryKey = `${storageKey}-won`;
+const previewFinale = new URLSearchParams(location.search).has('finale');
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+let saved = 0, savedVictory = false;
 try { saved = Math.min(levels.length-1,Math.max(0,Number(localStorage.getItem(storageKey))||0)); } catch { /* Private browsing may disable storage. */ }
+try { savedVictory = localStorage.getItem(victoryKey) === 'true'; } catch {}
 const game = new Game(saved), canvas=$('canvas'), ctx=canvas.getContext('2d');
 let mode='intro',art,last=0;
+let finaleElapsed=0, pausedMode='playing';
 const held = new Map(), keyboard = new Set();
 let jumpQueued=false,actionQueued=false;
 const keys = {ArrowLeft:'left',a:'left',ArrowRight:'right',d:'right',ArrowUp:'up',w:'up',ArrowDown:'down',s:'down',' ':'jump',e:'action'};
@@ -14,10 +20,26 @@ function clearInput(){held.clear();keyboard.clear();jumpQueued=false;actionQueue
 function save(){try{localStorage.setItem(storageKey,String(game.index));}catch{}}
 function hud(){ $('#floor').textContent=`${String(game.index+1).padStart(2,'0')} / ${String(levels.length).padStart(2,'0')} · ${game.level.name}`;$('#hint').textContent=game.message||game.level.hint; }
 function overlay(title,copy,button){clearInput();$('#overlay').hidden=false;$('#overlay-title').textContent=title;$('#overlay-copy').textContent=copy;$('#continue').textContent=button;$('#restart').hidden=false;$('#overlay-number').textContent=`${String(game.index+1).padStart(2,'0')} / ${String(levels.length).padStart(2,'0')} · ${game.level.name}`;}
-function start(){mode='playing';$('#overlay').hidden=true;document.activeElement?.blur();$('#pause').textContent='Ⅱ';$('#pause').setAttribute('aria-label','Pausar jogo');clearInput();}
-function pause(){if(mode==='playing'){mode='paused';overlay('Uma pausa no galho.','A árvore espera por você.','CONTINUAR');$('#pause').textContent='▶';$('#pause').setAttribute('aria-label','Continuar jogo');}else if(mode==='paused')start();}
+function start(nextMode='playing'){mode=nextMode;$('#overlay').hidden=true;document.activeElement?.blur();$('#pause').textContent='Ⅱ';$('#pause').setAttribute('aria-label','Pausar jogo');clearInput();}
+function pause(){if(mode==='playing'||mode==='finale'){pausedMode=mode;mode='paused';overlay('Uma pausa no galho.','A árvore espera por você.','CONTINUAR');if(pausedMode==='finale')$('#restart').hidden=true;$('#pause').textContent='▶';$('#pause').setAttribute('aria-label','Continuar jogo');}else if(mode==='paused')start(pausedMode);}
+function beginFinale(alreadyWon=false){
+  clearInput();game.load(levels.length-1);mode='finale';finaleElapsed=alreadyWon?FINALE_DURATION:0;
+  $('#overlay').hidden=true;$('.shell').classList.add('at-canopy');
+  $('#floor').textContent='Último andar · A copa da árvore';
+  $('#hint').textContent='Você chegou ao último andar. Olha o céu!';
+  document.querySelectorAll('[data-key]').forEach(button=>button.disabled=true);
+  if(alreadyWon)showVictory();
+}
+function showVictory(){
+  mode='won';if(!previewFinale){try{localStorage.setItem(victoryKey,'true');}catch{}}
+  overlay('Você ganhou!','Você chegou ao último andar e encontrou o céu.','VOLTAR AO MENU');
+  $('#overlay-number').textContent='NO ALTO DA ÁRVORE';$('#restart').hidden=true;
+  $('#overlay').classList.add('victory');$('#pause').disabled=true;
+  $('#hint').textContent='A subida terminou. Este lugar é seu.';
+  $('#continue').focus();
+}
 $('#pause').onclick=pause;
-$('#continue').onclick=()=>{if(mode==='complete'){if(game.index===levels.length-1)game.load(0);else game.load(game.index+1);save();}start();hud();};
+$('#continue').onclick=()=>{if(mode==='won'){location.href='../';return;}if(mode==='paused'){start(pausedMode);return;}if(mode==='complete'){game.load(game.index+1);save();}start();hud();};
 $('#restart').onclick=()=>{game.load(0);save();start();hud();};
 for(const button of document.querySelectorAll('[data-key]')){
   button.addEventListener('pointerdown',e=>{e.preventDefault();if(mode!=='playing')return;button.setPointerCapture(e.pointerId);held.set(e.pointerId,button.dataset.key);button.classList.add('held');if(button.dataset.key==='jump')jumpQueued=true;if(button.dataset.key==='action')actionQueued=true;});
@@ -27,11 +49,14 @@ for(const button of document.querySelectorAll('[data-key]')){
 }
 window.addEventListener('keydown',e=>{if(e.key==='Escape'||e.key.toLowerCase()==='p'){if(!e.repeat)pause();return;}const key=keys[e.key]||keys[e.key.toLowerCase()];if(!key||mode!=='playing'||e.target.closest?.('button,a'))return;e.preventDefault();keyboard.add(key);if(!e.repeat&&key==='jump')jumpQueued=true;if(!e.repeat&&key==='action')actionQueued=true;});
 window.addEventListener('keyup',e=>keyboard.delete(keys[e.key]||keys[e.key.toLowerCase()]));
-window.addEventListener('blur',()=>{clearInput();if(mode==='playing')pause();});
-document.addEventListener('visibilitychange',()=>{if(document.hidden){clearInput();if(mode==='playing')pause();}});
+window.addEventListener('blur',()=>{clearInput();if(mode==='playing'||mode==='finale')pause();});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){clearInput();if(mode==='playing'||mode==='finale')pause();}});
 function frame(now){const dt=Math.min((now-last)/1000,1/30);last=now;if(mode==='playing'){
   const input=Object.fromEntries([...keyboard,...held.values()].map(k=>[k,true]));input.jump=jumpQueued;input.action=actionQueued;jumpQueued=actionQueued=false;
-  game.step(dt,input);hud();if(game.complete){mode='complete';const final=game.index===levels.length-1;overlay(final?'A casa continua crescendo.':'Mais perto do céu.',final?'Você explorou os cinco primeiros andares. O X fica: ainda há muito para construir.':`Andar ${game.index+1} concluído. Vamos descobrir o próximo?`,final?'JOGAR DE NOVO':'PRÓXIMO ANDAR');$('#continue').focus();}
-}if(art)render(ctx,game,art);requestAnimationFrame(frame);}
+  game.step(dt,input);hud();if(game.complete){mode=destinationAfterExit(game.index,levels.length);if(mode==='finale')beginFinale();else{overlay('Mais perto do céu.',`Andar ${game.index+1} concluído. Vamos descobrir o próximo?`,'PRÓXIMO ANDAR');$('#continue').focus();}}
+}
+if(mode==='finale'){finaleElapsed+=dt;if(finalePose(finaleElapsed).won)showVictory();}
+if(art){if(mode==='finale'||mode==='won'||(mode==='paused'&&pausedMode==='finale'))renderFinale(ctx,art,finalePose(finaleElapsed,reducedMotion.matches));else render(ctx,game,art);}
+requestAnimationFrame(frame);}
 hud();
-loadArt().then(a=>{art=a;$('#continue').disabled=false;$('#continue').textContent=saved?'CONTINUAR SUBIDA':'COMEÇAR A SUBIDA';if(saved)$('#restart').hidden=false;requestAnimationFrame(frame);}).catch(error=>{$('#overlay-title').textContent='A arte não carregou.';$('#overlay-copy').textContent='Confira a conexão e recarregue a página.';console.error(error);});
+loadArt().then(a=>{art=a;$('#continue').disabled=false;$('#continue').textContent=saved?'CONTINUAR SUBIDA':'COMEÇAR A SUBIDA';if(saved)$('#restart').hidden=false;if(previewFinale||savedVictory)beginFinale(savedVictory&&!previewFinale);requestAnimationFrame(frame);}).catch(error=>{$('#overlay-title').textContent='A arte não carregou.';$('#overlay-copy').textContent='Confira a conexão e recarregue a página.';console.error(error);});

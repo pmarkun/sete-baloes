@@ -28,10 +28,13 @@ Veja [a biblioteca e o formato das fases](treehouse/README.md). O motor e os dad
 
 ```sh
 node treehouse/engine.test.mjs
+node treehouse/finale.test.mjs
 node --check treehouse/app.mjs
 ```
 
 Oito testes verificam as rotas dos cinco andares, escadas, salto e aterrissagem, bloqueios e reinício. [Relatório de validação visual e limitações](docs/validation.md).
+
+Três testes adicionais verificam o encerramento na copa, a subida ao céu e a preferência por redução de movimento. Depois da vitória o jogo permanece concluído, sem retornar ao primeiro andar; `treehouse/?finale=1` permite ver a cena sem alterar o progresso.
 
 ## Publicação
 
