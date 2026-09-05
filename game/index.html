@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <meta name="theme-color" content="#08070d" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2308070d'/%3E%3Cpath d='M7 2h2v4h4v2H9v6H7V8H3V6h4z' fill='%23d6a84b'/%3E%3C/svg%3E" />
+    <title>Sete Balões</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="game-shell" aria-label="Sete Balões — jogo de ascensão">
+      <canvas id="game" width="160" height="284" aria-label="Área do jogo"></canvas>
+
+      <section id="intertitle" class="intertitle is-visible" aria-live="polite">
+        <div class="intertitle__ornament" aria-hidden="true">†</div>
+        <p id="chapter" class="intertitle__chapter">UM JOGO DE ASCENSÃO</p>
+        <h1 id="story-title">SETE BALÕES</h1>
+        <p id="story-copy">Padre Bento amarrou sete promessas ao corpo. Nenhuma delas sabia o caminho.</p>
+        <button id="continue-button" type="button">SUBIR</button>
+        <p id="controls-hint" class="intertitle__hint">← → ou os botões na tela</p>
+      </section>
+
+      <button id="pause-button" class="pause-button" type="button" aria-label="Pausar jogo">Ⅱ</button>
+
+      <nav class="dpad" aria-label="Controles de movimento">
+        <button id="left-button" type="button" aria-label="Mover para esquerda">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 4 7.5 12l8 8" /></svg>
+        </button>
+        <button id="right-button" type="button" aria-label="Mover para direita">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8.5 4 8 8-8 8" /></svg>
+        </button>
+      </nav>
+    </main>
+
+    <script src="game.js"></script>
+  </body>
+</html>
