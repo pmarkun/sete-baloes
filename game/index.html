@@ -2,7 +2,8 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="description" content="Sete Balões: um jogo de ascensão em pixel art para celular." />
     <meta name="theme-color" content="#08070d" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
@@ -19,20 +20,21 @@
         <p id="chapter" class="intertitle__chapter">UM JOGO DE ASCENSÃO</p>
         <h1 id="story-title">SETE BALÕES</h1>
         <p id="story-copy">Padre Bento amarrou sete promessas ao corpo. Nenhuma delas sabia o caminho.</p>
+        <fieldset id="difficulty-selector" class="difficulty-selector">
+          <legend>DIFICULDADE</legend>
+          <div>
+            <button type="button" data-difficulty="easy" aria-pressed="false">FÁCIL</button>
+            <button type="button" data-difficulty="normal" aria-pressed="true">NORMAL</button>
+            <button type="button" data-difficulty="hell" aria-pressed="false">HELL</button>
+          </div>
+        </fieldset>
         <button id="continue-button" type="button">SUBIR</button>
-        <p id="controls-hint" class="intertitle__hint">← → ou os botões na tela</p>
+        <p id="controls-hint" class="intertitle__hint">toque em qualquer lugar e arraste</p>
       </section>
 
       <button id="pause-button" class="pause-button" type="button" aria-label="Pausar jogo">Ⅱ</button>
-
-      <nav class="dpad" aria-label="Controles de movimento">
-        <button id="left-button" type="button" aria-label="Mover para esquerda">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 4 7.5 12l8 8" /></svg>
-        </button>
-        <button id="right-button" type="button" aria-label="Mover para direita">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8.5 4 8 8-8 8" /></svg>
-        </button>
-      </nav>
+      <button id="monochrome-button" class="mono-button" type="button" aria-label="P&amp;B — ativar modo preto e branco" aria-pressed="false">P&amp;B</button>
+      <div id="touch-stick" class="touch-stick" aria-hidden="true"><i></i></div>
     </main>
 
     <script src="game.js"></script>

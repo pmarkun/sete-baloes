@@ -13,14 +13,18 @@
   const copyEl = document.querySelector("#story-copy");
   const continueButton = document.querySelector("#continue-button");
   const hintEl = document.querySelector("#controls-hint");
+  const difficultySelector = document.querySelector("#difficulty-selector");
+  const difficultyButtons = [...document.querySelectorAll("[data-difficulty]")];
   const pauseButton = document.querySelector("#pause-button");
-  const leftButton = document.querySelector("#left-button");
-  const rightButton = document.querySelector("#right-button");
+  const monochromeButton = document.querySelector("#monochrome-button");
+  const touchStick = document.querySelector("#touch-stick");
 
   ctx.imageSmoothingEnabled = false;
 
   const atlas = new Image();
   atlas.src = "assets/sprite-atlas-v2.png";
+  const luciferSprite = new Image();
+  luciferSprite.src = "assets/lucifer.png";
 
   const SPRITES = {
     priest: [105, 66, 128, 218],
@@ -101,6 +105,12 @@
     button: "APROXIMAR"
   };
 
+  const difficulties = {
+    easy: { id: "easy", label: "FÁCIL", speed: 0.76, spawn: 1.32, invulnerability: 2.3 },
+    normal: { id: "normal", label: "NORMAL", speed: 1, spawn: 1, invulnerability: 1.8 },
+    hell: { id: "hell", label: "HELL", speed: 1.38, spawn: 0.68, invulnerability: 1.05 }
+  };
+
   const keys = { left: false, right: false };
   const player = { x: W / 2, y: 210, w: 12, h: 19, speed: 68, invulnerable: 0 };
   let state = "title";
@@ -115,6 +125,10 @@
   let lastTime = performance.now();
   let currentStoryAction = "start-stage";
   let audio = null;
+  let musicTimer = null;
+  let musicStep = 0;
+  let difficulty = difficulties.normal;
+  const touch = { active: false, pointerId: null, originX: 0, currentX: 0 };
 
   const random = (min, max) => min + Math.random() * (max - min);
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
@@ -148,6 +162,29 @@
     oscillator.stop(audio.currentTime + duration);
   }
 
+  function playMusicStep() {
+    if (!audio || state !== "playing") return;
+    const melody = [110, 0, 123.47, 110, 82.41, 0, 103.83, 92.5, 110, 146.83, 0, 123.47, 77.78, 82.41, 0, 61.74];
+    const note = melody[musicStep % melody.length];
+    if (note) tone(note, 0.16, 0.012, "square");
+    if (musicStep % 4 === 0) tone((musicStep % 8 === 0 ? 55 : 41.2), 0.28, 0.014, "triangle");
+    if (musicStep % 16 === 15) tone(difficulty.id === "hell" ? 233.08 : 220, 0.06, 0.009, "sawtooth");
+    musicStep += 1;
+  }
+
+  function startMusic() {
+    if (musicTimer) return;
+    playMusicStep();
+    musicTimer = window.setInterval(playMusicStep, 235);
+  }
+
+  function setDifficulty(id) {
+    difficulty = difficulties[id] || difficulties.normal;
+    difficultyButtons.forEach((button) => {
+      button.setAttribute("aria-pressed", String(button.dataset.difficulty === difficulty.id));
+    });
+  }
+
   function drawSprite(name, x, y, width, height, flip = false, alpha = 1) {
     const source = SPRITES[name];
     if (!source || !atlas.complete || atlas.naturalWidth === 0) return;
@@ -170,7 +207,9 @@
     titleEl.textContent = story.title;
     copyEl.textContent = story.copy;
     continueButton.textContent = story.button || buttonText;
-    hintEl.hidden = action !== "start-stage" || stageIndex !== 0;
+    const showSetup = (action === "start-stage" && stageIndex === 0) || action === "restart";
+    difficultySelector.hidden = !showSetup;
+    hintEl.hidden = !showSetup;
     overlay.classList.add("is-visible");
     shell.classList.remove("is-playing");
   }
@@ -197,14 +236,16 @@
     stageTime = 0;
     spawnTimer = 0.7;
     hazards = [];
-    player.invulnerable = 1.25;
+    player.invulnerable = Math.min(1.5, difficulty.invulnerability);
     hideStory();
     tone(110 + stageIndex * 18, 0.35, 0.025, "sine");
+    startMusic();
   }
 
   function advanceStory() {
     ensureAudio();
     if (audio?.state === "suspended") audio.resume();
+    startMusic();
 
     if (currentStoryAction === "restart") {
       resetRun();
@@ -243,8 +284,8 @@
       y: horizontal ? player.y - specs.h / 2 + random(-4, 4) : -specs.h - 3,
       w: specs.w,
       h: specs.h,
-      vy: horizontal ? random(-1.5, 1.5) : random(...stage.speed),
-      vx: horizontal ? direction * random(46, 61) : random(-9, 9),
+      vy: horizontal ? random(-1.2, 1.2) : random(...stage.speed) * difficulty.speed,
+      vx: horizontal ? direction * random(30, 40) * difficulty.speed : random(-9, 9) * difficulty.speed,
       rotation: random(-0.08, 0.08),
       spin: type === "satellite" ? random(-1.4, 1.4) : 0,
       flip: direction < 0,
@@ -263,7 +304,7 @@
   function loseBalloon() {
     if (player.invulnerable > 0) return;
     balloons -= 1;
-    player.invulnerable = 1.8;
+    player.invulnerable = difficulty.invulnerability;
     tone(74, 0.38, 0.06, "sawtooth");
     if (navigator.vibrate) navigator.vibrate([45, 35, 70]);
 
@@ -329,7 +370,7 @@
     if (spawnTimer <= 0) {
       spawnHazard();
       const pressure = 1 - Math.min(0.32, stageTime / stages[stageIndex].duration * 0.22);
-      spawnTimer = stages[stageIndex].spawn * pressure * random(0.72, 1.15);
+      spawnTimer = stages[stageIndex].spawn * difficulty.spawn * pressure * random(0.72, 1.15);
     }
 
     hazards.forEach((hazard) => {
@@ -450,7 +491,14 @@
     ctx.fillStyle = "#e9dfcb";
     ctx.textAlign = "right";
     ctx.fillText(`${Math.floor(altitude)}m`, W - 7, 7);
+    ctx.fillStyle = difficulty.id === "hell" ? "#a62b38" : "#9a86ad";
+    ctx.fillText(difficulty.label, W - 7, 15);
     ctx.textAlign = "left";
+  }
+
+  function drawLucifer(x, y, width, height) {
+    if (!luciferSprite.complete || luciferSprite.naturalWidth === 0) return;
+    ctx.drawImage(luciferSprite, Math.floor(x), Math.floor(y), Math.floor(width), Math.floor(height));
   }
 
   function drawFinale() {
@@ -463,7 +511,11 @@
 
     drawSprite("cloud", 16, 105, 128, 34, false, 0.7);
     drawSprite("gate", 45, 42, 70, 62);
-    drawSprite("god", 69, 15, 22, 33);
+    if (difficulty.id === "hell") {
+      drawLucifer(48, 1, 64, 68);
+    } else {
+      drawSprite("god", 69, 15, 22, 33);
+    }
 
     const lost = MAX_BALLOONS - balloons;
     for (let i = 0; i < lost; i += 1) {
@@ -476,10 +528,16 @@
     ctx.textAlign = "center";
     ctx.fillStyle = "#d6a84b";
     ctx.font = "7px monospace";
-    ctx.fillText("PORTÃO 7", W / 2, 112);
+    ctx.fillText(difficulty.id === "hell" ? "A PORTA ABRIA PARA BAIXO" : "PORTÃO 7", W / 2, 112);
     ctx.fillStyle = "#e9dfcb";
     ctx.font = "6px monospace";
-    ctx.fillText(lost ? "VOCÊ JÁ ESTAVA NA FILA" : "A FILA ESPERAVA MESMO ASSIM", W / 2, 255);
+    ctx.fillText(
+      difficulty.id === "hell"
+        ? "NÃO ERA DEUS"
+        : (lost ? "VOCÊ JÁ ESTAVA NA FILA" : "A FILA ESPERAVA MESMO ASSIM"),
+      W / 2,
+      255
+    );
     ctx.fillStyle = "#9a86ad";
     ctx.fillText("TOQUE PARA RECOMEÇAR", W / 2, 266);
     ctx.textAlign = "left";
@@ -518,28 +576,56 @@
     requestAnimationFrame(frame);
   }
 
-  function setControl(control, active, button) {
+  function setControl(control, active) {
     keys[control] = active;
-    button.classList.toggle("is-pressed", active);
   }
 
-  function bindHold(button, control) {
-    button.addEventListener("pointerdown", (event) => {
-      event.preventDefault();
-      try {
-        button.setPointerCapture(event.pointerId);
-      } catch {
-        // Synthetic browser tests do not own an active OS pointer.
-      }
-      setControl(control, true, button);
-    });
-    ["pointerup", "pointercancel", "lostpointercapture"].forEach((eventName) => {
-      button.addEventListener(eventName, () => setControl(control, false, button));
-    });
+  function updateTouchDirection(clientX) {
+    touch.currentX = clientX;
+    const delta = clamp(clientX - touch.originX, -34, 34);
+    const deadzone = 6;
+    setControl("left", delta < -deadzone);
+    setControl("right", delta > deadzone);
+    touchStick.style.setProperty("--stick-x", `${delta * 0.52}px`);
   }
 
-  bindHold(leftButton, "left");
-  bindHold(rightButton, "right");
+  function releaseTouch() {
+    touch.active = false;
+    touch.pointerId = null;
+    setControl("left", false);
+    setControl("right", false);
+    touchStick.classList.remove("is-visible");
+    touchStick.style.setProperty("--stick-x", "0px");
+  }
+
+  shell.addEventListener("pointerdown", (event) => {
+    if (state !== "playing" || event.target.closest("button")) return;
+    event.preventDefault();
+    touch.active = true;
+    touch.pointerId = event.pointerId;
+    touch.originX = event.clientX;
+    const bounds = shell.getBoundingClientRect();
+    touchStick.style.left = `${event.clientX - bounds.left}px`;
+    touchStick.style.top = `${event.clientY - bounds.top}px`;
+    touchStick.classList.add("is-visible");
+    try {
+      shell.setPointerCapture(event.pointerId);
+    } catch {
+      // Synthetic browser tests do not own an active OS pointer.
+    }
+  });
+
+  shell.addEventListener("pointermove", (event) => {
+    if (!touch.active || event.pointerId !== touch.pointerId) return;
+    event.preventDefault();
+    updateTouchDirection(event.clientX);
+  });
+
+  ["pointerup", "pointercancel", "lostpointercapture"].forEach((eventName) => {
+    shell.addEventListener(eventName, (event) => {
+      if (touch.active && (event.pointerId === touch.pointerId || eventName === "lostpointercapture")) releaseTouch();
+    });
+  });
 
   window.addEventListener("keydown", (event) => {
     if (["ArrowLeft", "a", "A"].includes(event.key)) keys.left = true;
@@ -556,6 +642,21 @@
   continueButton.addEventListener("click", () => {
     tone(220, 0.08, 0.025);
     advanceStory();
+  });
+
+  difficultyButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      setDifficulty(button.dataset.difficulty);
+      tone(button.dataset.difficulty === "hell" ? 73.42 : 196, 0.08, 0.025, "square");
+    });
+  });
+
+  monochromeButton.addEventListener("click", () => {
+    const enabled = !shell.classList.contains("is-monochrome");
+    shell.classList.toggle("is-monochrome", enabled);
+    monochromeButton.setAttribute("aria-pressed", String(enabled));
+    monochromeButton.setAttribute("aria-label", enabled ? "P&B — desativar modo preto e branco" : "P&B — ativar modo preto e branco");
+    window.localStorage.setItem("sete-baloes-monochrome", enabled ? "1" : "0");
   });
 
   pauseButton.addEventListener("click", () => {
@@ -590,7 +691,15 @@
   });
 
   initStars();
-  const stageParam = new URLSearchParams(window.location.search).get("stage");
+  const urlParams = new URLSearchParams(window.location.search);
+  const difficultyParam = urlParams.get("difficulty");
+  if (difficultyParam && difficulties[difficultyParam]) setDifficulty(difficultyParam);
+  if (window.localStorage.getItem("sete-baloes-monochrome") === "1") {
+    shell.classList.add("is-monochrome");
+    monochromeButton.setAttribute("aria-pressed", "true");
+    monochromeButton.setAttribute("aria-label", "P&B — desativar modo preto e branco");
+  }
+  const stageParam = urlParams.get("stage");
   const previewStage = stageParam === null ? Number.NaN : Number(stageParam);
   if (Number.isInteger(previewStage) && previewStage >= 0 && previewStage < stages.length) {
     stageIndex = previewStage;

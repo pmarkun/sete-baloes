@@ -46,6 +46,10 @@ button {
   isolation: isolate;
 }
 
+.game-shell.is-monochrome {
+  filter: grayscale(1) contrast(1.2) brightness(1.32);
+}
+
 #game {
   display: block;
   width: 100%;
@@ -127,6 +131,52 @@ button {
   text-wrap: balance;
 }
 
+.difficulty-selector {
+  width: min(100%, 310px);
+  margin: 18px 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.difficulty-selector[hidden] {
+  display: none;
+}
+
+.difficulty-selector legend {
+  width: 100%;
+  margin-bottom: 8px;
+  color: var(--lavender);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+}
+
+.difficulty-selector div {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+}
+
+.difficulty-selector button {
+  min-height: 38px;
+  padding: 7px 3px;
+  border: 1px solid #655876;
+  border-radius: 0;
+  color: #9a86ad;
+  background: #12101d;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+
+.difficulty-selector button[aria-pressed="true"] {
+  border-color: var(--gold);
+  color: var(--ink);
+  background: var(--gold);
+  box-shadow: 3px 3px 0 #4a2f27;
+}
+
 #continue-button {
   min-width: 132px;
   min-height: 46px;
@@ -156,7 +206,7 @@ button {
 }
 
 .pause-button,
-.dpad button {
+.mono-button {
   position: absolute;
   z-index: 3;
   display: grid;
@@ -182,46 +232,55 @@ button {
   transition: opacity 120ms;
 }
 
+.mono-button {
+  top: max(61px, calc(env(safe-area-inset-top) + 58px));
+  right: 12px;
+  width: 42px;
+  height: 30px;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  opacity: 0.72;
+}
+
+.mono-button[aria-pressed="true"] {
+  color: #08070d;
+  background: #e9dfcb;
+}
+
 .game-shell.is-playing .pause-button {
   opacity: 0.72;
   pointer-events: auto;
 }
 
-.dpad {
+.touch-stick {
   position: absolute;
   z-index: 3;
-  left: max(12px, env(safe-area-inset-left));
-  bottom: max(16px, env(safe-area-inset-bottom));
-  display: flex;
-  gap: 8px;
+  left: 0;
+  top: 0;
+  width: 58px;
+  height: 58px;
+  margin: -29px 0 0 -29px;
+  border: 1px solid rgba(233, 223, 203, 0.35);
+  background: rgba(8, 7, 13, 0.2);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 120ms;
+  transition: opacity 90ms;
 }
 
-.game-shell.is-playing .dpad {
-  opacity: 0.72;
-  pointer-events: auto;
+.touch-stick.is-visible {
+  opacity: 0.58;
 }
 
-.dpad button {
-  position: relative;
-  width: clamp(58px, 17vw, 76px);
-  height: clamp(58px, 17vw, 76px);
-}
-
-.dpad button.is-pressed {
-  background: rgba(166, 43, 56, 0.72);
-  translate: 2px 2px;
-}
-
-.dpad svg {
-  width: 45%;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 3;
-  stroke-linecap: square;
-  stroke-linejoin: miter;
+.touch-stick i {
+  position: absolute;
+  left: 18px;
+  top: 18px;
+  width: 20px;
+  height: 20px;
+  border: 1px solid rgba(233, 223, 203, 0.72);
+  background: rgba(154, 134, 173, 0.45);
+  transform: translateX(var(--stick-x, 0));
 }
 
 button:focus-visible {
@@ -240,7 +299,8 @@ button:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .intertitle,
   .pause-button,
-  .dpad {
+  .mono-button,
+  .touch-stick {
     transition: none;
   }
 }

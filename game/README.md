@@ -16,11 +16,14 @@ Para inspecionar diretamente a cena final durante o desenvolvimento, abra `http:
 
 Para testar uma fase específica, use `http://localhost:4173/?stage=N`, de `0` a `4`. Por exemplo, `?stage=2` abre diretamente a fase dos aviões.
 
+Para combinar fase e dificuldade durante o desenvolvimento, use `?stage=2&difficulty=hell`. O final alternativo pode ser visto em `?difficulty=hell#finale`.
+
 ## Controles
 
-- Celular: botões de esquerda e direita na parte inferior da tela.
+- Celular: toque em qualquer lugar da área do jogo e arraste para a esquerda ou direita. O direcional aparece onde o dedo encostar.
 - Teclado: setas, `A` e `D`.
 - Pausa: botão `Ⅱ`, tecla `P` ou `Esc`.
+- Visual: o botão `P&B` alterna o jogo inteiro entre a paleta original e preto e branco.
 
 ## Estrutura da partida
 
@@ -34,3 +37,5 @@ Para testar uma fase específica, use `http://localhost:4173/?stage=N`, de `0` a
 Cada zona dura entre 32 e 45 segundos e tem um intertítulo narrativo. A cena final mostra na fila as versões do padre correspondentes aos balões perdidos durante a subida.
 
 Na V2, os aviões atravessam a altura do jogador e obrigam deslocamento lateral; os alienígenas aparecem apenas pilotando os discos voadores; os balões têm silhueta simples e ficam presos à cintura do padre.
+
+Na V3, o jogo ganha três dificuldades (`FÁCIL`, `NORMAL` e `HELL`), avião mais lento no Normal, controle flutuante por arrasto, modo preto e branco, trilha procedural 8-bit e um final exclusivo no Hell.
