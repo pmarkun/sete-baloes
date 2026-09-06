@@ -3,6 +3,7 @@ import { levels } from './levels.mjs';
 import { loadArt, render, renderFinale } from './render.mjs';
 import { destinationAfterExit, finalePose, FINALE_DURATION } from './finale.mjs';
 import { Soundscape } from './audio.mjs';
+import { mechanicHint } from './mechanics.mjs';
 const $ = s => document.querySelector(s);
 const storageKey = 'casa-na-arvore-progress-v1';
 const victoryKey = `${storageKey}-won`;
@@ -23,8 +24,9 @@ try {
 } catch {}
 if(preview&&!previewFinale){saved=previewFloor-1;savedVictory=false;}
 const game = new Game(saved), canvas=$('canvas'), ctx=canvas.getContext('2d'), world=$('.world');
-function fitCanvas(){const width=Math.floor(Math.min(world.clientWidth,world.clientHeight*2/3));canvas.style.width=`${width}px`;canvas.style.height=`${Math.floor(width*3/2)}px`;}
+function fitCanvas(){const width=Math.floor(Math.min(world.clientWidth,world.clientHeight*2/3));canvas.style.width=`${width}px`;canvas.style.height=`${width*3/2}px`;}
 fitCanvas();window.addEventListener('resize',fitCanvas);window.visualViewport?.addEventListener('resize',fitCanvas);
+new ResizeObserver(fitCanvas).observe(world);
 const sound=new Soundscape();
 const devFloor=$('#dev-floor');
 levels.forEach((level,index)=>devFloor.add(new Option(`${String(index+1).padStart(2,'0')} · ${level.name}`,String(index+1))));
@@ -50,8 +52,8 @@ for(const type of ['contextmenu','selectstart'])$('.shell').addEventListener(typ
 function hud(){
   $('#floor').textContent=`${String(game.index+1).padStart(2,'0')} / ${String(levels.length).padStart(2,'0')}${game.inPast?'':` · ${game.level.name}`}`;
   const mirrored=!!game.flags.mirror;
-  $('#hint').textContent=mirrored?'O espelho virou tudo: direita ↔ esquerda · cima ↔ baixo.':' ';
-  $('#hint').hidden=!mirrored;
+  const hint=mirrored?'O espelho virou tudo: direita ↔ esquerda · cima ↔ baixo.':mechanicHint(game);
+  $('#hint').textContent=hint;$('#hint').hidden=!hint;
   $('.controls').classList.toggle('mirrored',mirrored);
 }
 function overlay(title,copy,button){clearInput();$('#overlay').hidden=false;$('#overlay-title').textContent=title;$('#overlay-copy').textContent=copy;$('#continue').textContent=button;$('#restart').hidden=false;$('#overlay-number').textContent=`${String(game.index+1).padStart(2,'0')} / ${String(levels.length).padStart(2,'0')} · ${game.level.name}`;}

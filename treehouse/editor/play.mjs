@@ -1,17 +1,20 @@
 import { Game } from '../engine.mjs';
 import { loadArt, render } from '../render.mjs';
 import { Soundscape } from '../audio.mjs';
+import { mechanicHint } from '../mechanics.mjs';
 import { EDITOR_PREVIEW_KEY, parseLevel } from './model.mjs';
 
 const $ = selector => document.querySelector(selector);
 const canvas = $('canvas');
 const ctx = canvas.getContext('2d');
 const world = $('.world');
-function fitCanvas() { const width = Math.floor(Math.min(world.clientWidth, world.clientHeight * 2 / 3)); canvas.style.width = `${width}px`; canvas.style.height = `${Math.floor(width * 3 / 2)}px`; }
+function fitCanvas() { const width = Math.floor(Math.min(world.clientWidth, world.clientHeight * 2 / 3)); canvas.style.width = `${width}px`; canvas.style.height = `${width * 3 / 2}px`; }
 fitCanvas(); window.addEventListener('resize', fitCanvas); window.visualViewport?.addEventListener('resize', fitCanvas);
+new ResizeObserver(fitCanvas).observe(world);
 const keys = { ArrowLeft: 'left', a: 'left', ArrowRight: 'right', d: 'right', ArrowUp: 'up', w: 'up', ArrowDown: 'down', s: 'down', ' ': 'jump', e: 'action' };
 const held = new Map();
 const keyboard = new Set();
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 let jumpQueued = false;
 let actionQueued = false;
 let mode = 'intro';
@@ -70,7 +73,7 @@ function soundButton() {
 function hud() {
   if (!game) return;
   $('#preview-name').textContent = game.level.name;
-  $('#hint').textContent = game.flags.mirror ? 'O espelho virou tudo: direita ↔ esquerda · cima ↔ baixo.' : 'A prévia não altera progresso nem fases oficiais.';
+  $('#hint').textContent = game.flags.mirror ? 'O espelho virou tudo: direita ↔ esquerda · cima ↔ baixo.' : mechanicHint(game) || 'A prévia não altera progresso nem fases oficiais.';
   $('.controls').classList.toggle('mirrored', !!game.flags.mirror);
 }
 
@@ -97,7 +100,7 @@ function frame(now) {
     const input = Object.fromEntries([...keyboard, ...held.values()].map(key => [key, true])); input.jump = jumpQueued; input.action = actionQueued; jumpQueued = false; actionQueued = false;
     game.step(dt, input); for (const event of game.drainEvents()) sound.effect(event); hud(); if (game.complete) finish();
   }
-  sound.setScene(game?.level.music); sound.setActive(mode === 'playing'); sound.update(); if (art && game) render(ctx, game, art); requestAnimationFrame(frame);
+  sound.setScene(game?.level.music); sound.setActive(mode === 'playing'); sound.update(); if (art && game) render(ctx, game, art, {reducedMotion:reducedMotion.matches}); requestAnimationFrame(frame);
 }
 
 if (!level) {

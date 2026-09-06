@@ -1,7 +1,7 @@
 import { levels } from './levels.mjs';
 import { landingSurface, impact, updateObjects } from './physics.mjs';
 import { updateNight } from './night.mjs';
-import { updateChaser, updateDroplets, updateRopes } from './mechanics.mjs';
+import { ropePose, updateChaser, updateDroplets, updateRopes, updateRecovery, useLure } from './mechanics.mjs';
 import { thiefPose, pastSelfPose, PORTAL_X, LEDGE_Y } from './temporal.mjs';
 export const WIDTH = 240, HEIGHT = 360;
 export class Game {
@@ -11,7 +11,8 @@ export class Game {
     this.level = structuredClone(this.levels[this.index]);
     this.player = { ...this.level.spawn, vy: 0, vx: 0, rope: null, grounded: true, climbing: false, facing: 1, moving: false };
     this.flags = {...this.level.entryFlags}; this.complete = false; this.time = 0;
-    this.hunter=null;this.chaser=null;this.ropes=[];this.hazardRetry=0;this.lastDark=false;
+    this.hunter=null;this.chaser=null;this.ropes=(this.level.ropes||[]).map(r=>ropePose(r,0));this.hazardRetry=0;this.lastDark=false;
+    this.drops=[];this.splashes=[];this.checkpointIndex=-1;this.lureCooldowns=[];this.distraction=null;
     this.events = []; this.sequence = []; this.timer = 0; this.shake = 0;
     this.inPast = false; this.returnState = null; this.temporalClock = 0;
     this.theftClock = null; this.ghost = null; this.pastSelf = null; this.retryDelay = 0;
@@ -52,6 +53,7 @@ export class Game {
   }
   interact() {
     const p = this.player;
+    if (useLure(this)) return;
     const portal = this.level.portal;
     if (portal && Math.abs(p.x-portal.x)<19 && Math.abs(p.y-portal.y)<20) {
       if (this.inPast) {
@@ -104,6 +106,8 @@ export class Game {
     dt = Math.min(dt, 1 / 30); this.time += dt;
     if(this.timer>0){this.timer=Math.max(0,this.timer-dt);if(!this.timer){this.flags.timer=false;this.emit('hatch');}}
     const p = this.player, previousY = p.y;
+    for(const key of ['hitStun','invulnerable','slipThrough'])p[key]=Math.max(0,(p[key]||0)-dt);
+    if(p.hitStun)input={};
     const ridingRope = updateRopes(this, dt, input);
     if (!ridingRope) {
       const mirrored = !!this.flags.mirror;
@@ -111,7 +115,7 @@ export class Game {
         ? Number(!!input.left) - Number(!!input.right)
         : Number(!!input.right) - Number(!!input.left);
       p.x = Math.max(37, Math.min(203, p.x + axis * 76 * dt + p.vx * dt));
-      p.vx *= Math.pow(.0001, dt);
+      p.vx *= Math.exp(-(p.grounded ? 14 : 2.2) * dt);
       p.moving = !!axis || Math.abs(p.vx) > 8;
       if (axis) p.facing = axis;
       const near = this.level.ladders.find(l => Math.abs(p.x - l.x) < 10 && p.y >= l.top - 1 && p.y <= l.bottom + 2);
@@ -119,7 +123,7 @@ export class Game {
         ? Number(!!input.up) - Number(!!input.down)
         : Number(!!input.down) - Number(!!input.up);
       // A closed ascent gate must never strand someone above it when a timer expires.
-      const canClimb = near && (!near.requires || this.flags[near.requires] || vertical > 0);
+      const canClimb = !p.hitStun && near && (!near.requires || this.flags[near.requires] || vertical > 0);
       p.climbing = !!(canClimb && (vertical || p.climbing) && !axis);
       if (input.jump && (p.grounded || p.climbing)) { p.vy = -this.level.physics.jumpSpeed; p.grounded = false; p.climbing = false; this.emit('jump'); }
       else if (p.climbing) {
@@ -128,8 +132,8 @@ export class Game {
       }
       if (!p.climbing) {
         p.vy += this.level.physics.gravity * dt; p.y += p.vy * dt; p.grounded = false;
-        const s=p.vy>=0&&landingSurface(this.level,this.flags,p.x,previousY,p.y);
-        if(s){impact(this,p.vy);p.y=s.y;p.vy=0;p.grounded=true;}
+        const s=!p.slipThrough&&p.vy>=0&&landingSurface(this.level,this.flags,p.x,previousY,p.y);
+        if(s){impact(this,p.vy);p.y=s.y;p.vy=0;p.vx=0;p.grounded=true;p.releasedRope=null;}
       }
     }
     updateObjects(this,dt);
@@ -146,7 +150,8 @@ export class Game {
     }
     updateNight(this,dt);
     updateChaser(this,dt);
-    if (input.action&&!this.hazardRetry) this.interact();
+    updateRecovery(this);
+    if (input.action&&!this.hazardRetry&&p.rope===null) this.interact();
     if(!this.complete)this.updateTemporal(dt);
   }
 }

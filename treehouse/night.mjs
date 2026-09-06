@@ -11,8 +11,7 @@ export function failAttempt(game, event='caught') {
   if(game.hazardRetry)return;
   game.hazardRetry=.8;game.player.moving=false;game.emit(event);
 }
-function pursuitTarget(game,h) {
-  const p=game.player;
+export function pursuitTarget(game,h,p=game.player) {
   if(Math.abs(h.y-p.y)<2)return {x:p.x,y:h.y};
   const up=p.y<h.y;
   const climbing=game.level.ladders.find(l=>Math.abs(h.x-l.x)<.5&&h.y>l.top+.5&&h.y<l.bottom-.5);

@@ -1,5 +1,15 @@
 # Validação mais recente — três fases novas e proporção do canvas
 
+## Revamp de jogabilidade dos andares 14–16 — 5 de setembro de 2026
+
+59 testes passam. As três fases são concluídas por comandos públicos em passos de 30, 60 e 120 Hz, sem teletransportar a personagem ou alterar flags para resolver os desafios. Regressões cobrem impulso tangencial, soltura sem reagarre, quedas/retornos, abrigo seco, água escorrendo e proteção após acerto, captura/reinício, esquiva da investida e distração dos sinos. Uma rota de fuga admite pausas de 0,75 s junto a cada sino.
+
+Chrome conectado: as três sequências de comandos foram reproduzidas por eventos de teclado na interface com relógio de animação determinístico. Andares 14 e 15 exibiram conclusão; 16 chegou à copa e a “Você ganhou!”. Nenhuma chave de progresso/vitória foi gravada pelos atalhos de teste. A cópia da fase 15 foi concluída na prévia do editor. A verificação encontrou e corrigiu o índice incorreto em “Duplicar fase oficial”; cópias dos andares 14 e 15 preservaram as mecânicas. JSON avançado inválido apresenta erro sem derrubar o renderer.
+
+Visual: screenshots em 390×844 conferiram copa verde com duas cordas/bandeiras, calhas e abrigos sob chuva azulada, amanhecer e sinos na perseguição. Viewports do jogo: 360×800, 390×844, 768×1024, 1366×768 e 1440×900. Canvas 2:3, rodapé visível, alvos de 44 px e sem overflow horizontal. A tela inicial ganhou espaçamento compacto em alturas menores para acomodar o seletor. Editor conferido em desktop. Console sem erros/avisos nos fluxos.
+
+Limitações: Chrome apenas; Firefox/WebKit e aparelhos físicos Safari/iOS/Android não foram executados. Os percursos no navegador usam comandos sintéticos com relógio controlado; início por clique e a apresentação com animação normal também foram inspecionados. Não é uma avaliação de dificuldade com jogadores externos nem de multitouch físico. Nenhuma dependência ou atlas novo.
+
 ## Três fases novas e seletor de desenvolvedor — 5 de setembro de 2026
 
 45 testes aprovados. Os andares 14, 15 e 16 cobrem balanço e soltura da corda com impulso, gotas com recuo/queda e perseguição no claro com captura. O validador do editor reconhece `ropes`, `droplets` e `chaser`, e o `Game` continua aceitando fonte opcional de fases.

@@ -5,6 +5,7 @@ export const EDITOR_STORAGE_KEY = 'treehouse-level-editor-v1';
 export const EDITOR_PREVIEW_KEY = 'treehouse-level-editor-preview-v1';
 export const WORLD_WIDTH = 240;
 export const WORLD_HEIGHT = 360;
+export const LEVEL_OPTIONS = ['theme', 'recovery', 'checkpoints', 'shelters', 'lures', 'lighting', 'hunter', 'chaser', 'ropes', 'droplets', 'paradox', 'melody', 'music', 'entryFlags'];
 
 const collectionFields = ['platforms', 'ladders', 'objects'];
 const advancedFields = ['physics', 'lighting', 'hunter', 'chaser', 'paradox', 'melody', 'music', 'entryFlags'];
@@ -107,6 +108,9 @@ export function validateLevel(level) {
       number(rope.length, `${path}.length`, { min: 1, max: WORLD_HEIGHT });
       number(rope.amplitude, `${path}.amplitude`, { min: 0, max: 1.5 });
       number(rope.speed, `${path}.speed`, { min: 0 });
+      if (rope.phase !== undefined) number(rope.phase, `${path}.phase`);
+      const reach = Math.sin(rope.amplitude) * rope.length;
+      if (rope.pivotX-reach<0 || rope.pivotX+reach>WORLD_WIDTH || rope.pivotY+rope.length+22>WORLD_HEIGHT) error(path, 'o balanço e a personagem devem caber no mundo');
     }
   }
   if (level.droplets !== undefined) {
@@ -116,11 +120,38 @@ export function validateLevel(level) {
       if (!drop || typeof drop !== 'object') { error(path, 'deve ser um objeto'); continue; }
       point(drop, path); number(drop.speed, `${path}.speed`, { min: 0 });
       if (drop.drift !== undefined) number(drop.drift, `${path}.drift`, { min: 0 });
+      if (drop.period !== undefined) number(drop.period, `${path}.period`, { min: .8 });
+      if (drop.active !== undefined) number(drop.active, `${path}.active`, { min: .05, max: (drop.period ?? 3.2)-.65 });
+      if (drop.phase !== undefined) number(drop.phase, `${path}.phase`);
+      if (drop.flowSpeed !== undefined) number(drop.flowSpeed, `${path}.flowSpeed`, { min: 1, max: 200 });
+      if (drop.direction !== undefined && ![-1,1].includes(drop.direction)) error(`${path}.direction`, 'use -1 ou 1');
     }
   }
+  for(const field of ['checkpoints','shelters','lures']) {
+    if(level[field]===undefined)continue;
+    if(!Array.isArray(level[field])){error(field,'deve ser uma lista');continue;}
+    for(const [index,item] of level[field].entries()){
+      const path=`${field}[${index}]`;
+      if(!point(item,path))continue;
+      if(field==='shelters'){
+        number(item.w,`${path}.w`,{min:1,max:WORLD_WIDTH});
+        if(item.x+item.w>WORLD_WIDTH)error(path,'o abrigo deve caber no mundo');
+      }
+      if(field==='lures'){
+        requirement(item.flag,`${path}.flag`);
+        for(const key of ['duration','cooldown'])if(item[key]!==undefined)number(item[key],`${path}.${key}`,{min:.1,max:30});
+      }
+      if(field==='checkpoints' && Array.isArray(level.platforms) && !level.platforms.some(p=>p && Math.abs(p.y-item.y)<1 && item.x>=p.x && item.x<=p.x+p.w && !p.requires))error(path,'o ponto de retorno precisa de um piso permanente');
+    }
+  }
+  if(level.recovery!==undefined && typeof level.recovery!=='boolean')error('recovery','deve ser booleano');
+  if(level.theme!==undefined && !['canopy','rain','sunrise'].includes(level.theme))error('theme','tema desconhecido');
   if (level.chaser !== undefined) {
     if (!level.chaser || typeof level.chaser !== 'object') error('chaser', 'deve ser um objeto');
-    else { point(level.chaser.spawn, 'chaser.spawn'); number(level.chaser.speed, 'chaser.speed', { min: 0 }); if (level.chaser.triggerY !== undefined) number(level.chaser.triggerY, 'chaser.triggerY', { min: 0, max: WORLD_HEIGHT }); }
+    else {
+      point(level.chaser.spawn, 'chaser.spawn'); number(level.chaser.speed, 'chaser.speed', { min: 0 });
+      for(const key of ['triggerY','triggerX','climbSpeed','chargeSpeed'])if(level.chaser[key]!==undefined)number(level.chaser[key],`chaser.${key}`,{min:0,max:key==='triggerX'?WORLD_WIDTH:WORLD_HEIGHT});
+    }
   }
   if (!level.physics || typeof level.physics !== 'object') error('physics', 'a fase precisa de configurações de física');
   else { number(level.physics.gravity, 'physics.gravity', { min: 0 }); number(level.physics.jumpSpeed, 'physics.jumpSpeed', { min: 0 }); if (level.physics.impactThreshold !== undefined) number(level.physics.impactThreshold, 'physics.impactThreshold', { min: 0 }); }

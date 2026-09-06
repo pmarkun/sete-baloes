@@ -34,9 +34,9 @@ Uma menina explora dezesseis andares de uma árvore em pixel art. O X faz parte 
 | 11 | Lampião, escuridão, vãos e espinhos |
 | 12 | Luz intermitente e criatura mecânica que só avança no escuro |
 | 13 | Espelho que inverte a paleta e os quatro controles direcionais |
-| 14 | Corda que balança e lança a personagem entre os galhos |
-| 15 | Gotas que caem, arrastam para trás e derrubam |
-| 16 | Criatura que persegue no claro; corra até a saída |
+| 14 | Duas travessias de corda, impulso de balanço e pontos de retorno |
+| 15 | Calhas com rajadas anunciadas, água escorrendo, abrigos e saltos |
+| 16 | Perseguição por escadas, investidas, salto e sinos que distraem |
 
 A conclusão do décimo sexto andar leva à copa e ao céu, mantendo o encerramento “Você ganhou!”. Ao tocar o espelho, direita vira esquerda e cima vira baixo até o fim da fase. Quem concluiu os dez andares anteriores entra no 11 com o lampião. Quem já havia concluído os cinco andares antigos continua a partir do sexto; use RECOMEÇAR para ver a nova cena do quarto andar desde o início.
 
@@ -62,7 +62,7 @@ node --check treehouse/editor/editor.mjs
 node --check treehouse/editor/play.mjs
 ```
 
-45 testes verificam os percursos, bloqueios, ações explícitas, espelho, corda, gotas, perseguição no claro, eventos sonoros, perseguição temporal, fuga, recuperação após captura, passagem temporizada, editor e encerramento. [Relatório de validação visual e limitações](docs/validation.md).
+59 testes verificam os percursos, bloqueios, ações explícitas, espelho, corda, gotas, perseguição no claro, eventos sonoros, perseguição temporal, fuga, recuperação após captura, passagem temporizada, editor e encerramento. As três últimas fases têm percursos completos por controles em 30, 60 e 120 Hz. [Propostas e decisões do revamp](docs/revamp-fases-14-16.md) · [Validação visual e limitações](docs/validation.md).
 
 Depois da vitória, voltar ao menu limpa a fase salva e a marca de conclusão, preparando uma nova partida no primeiro andar. Sair no meio da subida preserva o progresso; `treehouse/?finale=1` permite ver a cena sem alterar o progresso.
 

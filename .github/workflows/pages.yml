@@ -42,6 +42,7 @@ jobs:
           node --check treehouse/render.mjs
           node --check treehouse/audio.mjs
           node --check treehouse/mechanics.mjs
+          node --check treehouse/mechanics-render.mjs
           node --check treehouse/editor/editor.mjs
           node --check treehouse/editor/play.mjs
 

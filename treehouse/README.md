@@ -85,10 +85,14 @@ O andar 10 coloca `object('lantern',145,58)` no caminho entre a última escada e
 
 ## Corda, chuva e perseguição
 
-O andar 14 declara `ropes:[{pivotX,pivotY,length,amplitude,speed,phase}]`. A ponta balança com uma onda senoidal; um salto durante o balanço solta a personagem com impulso horizontal, permitindo atravessar o vão até os outros galhos. A posição derivada da corda é recalculada pelo motor e também aparece no editor/prévia.
+O andar 14 declara `ropes:[{pivotX,pivotY,length,amplitude,speed,phase}]`. São duas travessias em sentidos opostos. ↑ ou AÇÃO junto ao pegador agarra; PULAR solta com a velocidade tangencial do balanço. A mesma corda não pode ser agarrada novamente antes de pousar. ↑ prioriza uma escada próxima. Piso inferior e bandeiras de retorno permitem repetir os saltos. O renderer desenha a mesma posição inicial no editor e no jogo.
 
-O andar 15 declara `droplets:[{x,y,speed,drift,phase}]`. Cada gota desce com um rastro e deriva levemente; ao tocar a personagem, aplica recuo, queda e reinicia apenas a tentativa depois de 0,8 segundo. A fase combina a chuva com um vão e espinhos para tornar o caminho legível no movimento.
+O andar 15 declara emissores em `droplets:[{x,y,speed,direction,flowSpeed,period,active,phase}]`. Uma gota crescente anuncia a rajada 0,65 s antes; gotas em movimento ficam em `game.drops`, sem alterar o documento. Ao atingir um piso, viram água corrente até cair pela borda. `shelters:[{x,y,w}]` bloqueiam gotas e drenam água do piso logo abaixo. Acerto aplica impulso de 125 unidades/s, queda através do piso, breve perda de controle de 0,28 s e proteção por 1,1 s. Não congela nem reinicia instantaneamente. A rota tem dois saltos, chave e porta no alto.
 
-O andar 16 declara `chaser:{triggerY,spawn:{x,y},speed}`. A criatura aparece no claro desde o início, aproxima-se horizontalmente e captura por contato; a velocidade da personagem é maior, então a solução é correr até a porta. O seletor `DESENVOLVEDOR · abrir fase` da tela inicial abre qualquer andar com `?floor=N`, sem salvar progresso.
+O andar 16 declara `chaser:{triggerX,triggerY,spawn:{x,y},speed,climbSpeed,chargeSpeed}`. A criatura acorda quando o jogador avança, persegue também pelas escadas e prepara investidas por 0,7 s, seguidas de recuperação. O ataque fixa a direção, permitindo esquiva por salto. `lures:[{x,y,flag,duration,cooldown}]` são sinos acionados por AÇÃO; cada sino desvia a criatura por 3 s e recarrega em 6 s. Os dois sinais abrem a porta. Há um obstáculo para saltar durante a fuga.
+
+`recovery:true` e `checkpoints:[{x,y}]` ativam retornos locais nos andares 14 e 15. Uma bandeira é ativada ao pousar perto dela; cair para um piso inferior devolve à última bandeira, preservando as flags. Recarregar a fase reinicia os retornos. `theme:'canopy'|'rain'|'sunrise'` define a atmosfera visual, sem mudar colisões. Essas propriedades são preservadas e editáveis no JSON avançado; o validador rejeita balanços fora do mundo, tempos inválidos e retornos sem piso.
+
+O seletor `DESENVOLVEDOR · abrir fase` da tela inicial abre qualquer andar com `?floor=N`, sem salvar progresso. O editor usa as mesmas regras na prévia. Veja [as propostas e decisões de jogabilidade](../docs/revamp-fases-14-16.md).
 
 Arte: `assets/night-objects.png`, duas poses da criatura e lampião. ImageGen integrado; [prompt e registro do asset](assets/night-objects.prompt.md). Espinhos e máscara de iluminação são geometria nativa de canvas.

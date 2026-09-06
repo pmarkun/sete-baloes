@@ -4,6 +4,7 @@ import { Game } from '../engine.mjs';
 import { loadArt, render } from '../render.mjs';
 import {
   EDITOR_SCHEMA_VERSION,
+  LEVEL_OPTIONS,
   EDITOR_STORAGE_KEY,
   EDITOR_PREVIEW_KEY,
   WORLD_WIDTH,
@@ -251,7 +252,7 @@ function editorFieldsFor(ref, value) {
 
 function renderInspector() {
   if (!selected || !selectedValue()) {
-    const advanced = {}; for (const key of ['lighting', 'hunter', 'chaser', 'ropes', 'droplets', 'paradox', 'melody', 'music', 'entryFlags']) if (draft[key] !== undefined) advanced[key] = draft[key];
+    const advanced = {}; for (const key of LEVEL_OPTIONS) if (draft[key] !== undefined) advanced[key] = draft[key];
     inspector.innerHTML = `<div class="inspector-form"><h3>Configuração da fase</h3><div class="field-grid">${textField('Nome', 'name', draft.name, true)}${numberField('Spawn X', 'spawn.x', draft.spawn.x)}${numberField('Spawn Y', 'spawn.y', draft.spawn.y)}${numberField('Gravidade', 'physics.gravity', draft.physics.gravity, { max: 2000 })}${numberField('Força do pulo', 'physics.jumpSpeed', draft.physics.jumpSpeed, { max: 500 })}${numberField('Limite de impacto', 'physics.impactThreshold', draft.physics.impactThreshold ?? '', { max: 2000 })}${advancedField(advanced, 'level')}</div></div><div class="empty-inspector">Selecione uma peça no mundo para editar suas propriedades. A configuração avançada aceita iluminação, perseguição, cordas, gotas, paradoxo, ritmo e flags de entrada.</div>`;
     bindLevelInspector(); return;
   }
@@ -275,7 +276,7 @@ function bindLevelInspector() {
   inspector.querySelector('[data-advanced="level"]')?.addEventListener('change', event => {
     try {
       const advanced = JSON.parse(event.target.value); if (!advanced || typeof advanced !== 'object' || Array.isArray(advanced)) throw new Error('use um objeto JSON');
-      commit(level => { for (const key of ['lighting', 'hunter', 'chaser', 'ropes', 'droplets', 'paradox', 'melody', 'music', 'entryFlags']) delete level[key]; Object.assign(level, advanced); });
+      commit(level => { for (const key of LEVEL_OPTIONS) delete level[key]; Object.assign(level, advanced); });
       event.target.setCustomValidity('');
     } catch (error) { event.target.setCustomValidity(error.message); event.target.reportValidity(); setStatus(`JSON avançado inválido: ${error.message}`, true); }
   });
@@ -325,6 +326,12 @@ function drawEditorOverlay() {
 
 function refreshStage() {
   if (!art) { ctx.fillStyle = '#21151e'; ctx.fillRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT); return; }
+  if (!validateLevel(draft).valid) {
+    ctx.fillStyle='#21151e';ctx.fillRect(0,0,WORLD_WIDTH,WORLD_HEIGHT);
+    ctx.fillStyle='#f4d9a4';ctx.font='10px monospace';ctx.textAlign='center';
+    ctx.fillText('Revise os erros no inspetor',120,180);
+    return;
+  }
   const game = new Game(0, { levels: [exportableLevel(draft)] });
   render(ctx, game, art); drawEditorOverlay();
 }
@@ -360,7 +367,7 @@ function newDraft() { const item = makeDraft(blankLevel()); drafts.push(item); a
 
 function duplicateSource() {
   const source = sourceSelect.value;
-  const level = source === 'blank' ? blankLevel() : source.startsWith('builtin:') ? levels[Number(source.slice(7))] : drafts.find(item => item.id === source.slice(6))?.level;
+  const level = source === 'blank' ? blankLevel() : source.startsWith('builtin:') ? levels[Number(source.slice('builtin:'.length))] : drafts.find(item => item.id === source.slice('draft:'.length))?.level;
   if (!level) return;
   const item = makeDraft(level, `${level.name || 'Nova fase'} · cópia`); drafts.push(item); activeId = item.id; draft = cloneLevel(item.level); selected = null; resetHistory(); persist('Fase duplicada'); refresh();
 }

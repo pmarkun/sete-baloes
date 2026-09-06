@@ -81,6 +81,9 @@ export class Soundscape {
     else if(type==='grow'){[60,64,67,72,76].forEach((n,i)=>this.tone(n,.22,.10,'triangle',now+i*.08));}
     else if(type==='mirror'){[84,72,88,76].forEach((n,i)=>this.tone(n,.18,.11,'sine',now+i*.09));}
     else if(type==='rope'){this.tone(58,.16,.09,'triangle',now,7);}
+    else if(type==='charge'){this.tone(45,.35,.1,'triangle',now,7);}
+    else if(type==='checkpoint'){[72,79,84].forEach((n,i)=>this.tone(n,.2,.08,'sine',now+i*.09));}
+    else if(type==='recover'){this.tone(64,.25,.08,'sine',now,7);}
     else if(type==='droplet'){this.tone(72,.22,.08,'sine',now,-19);this.tone(48,.16,.05,'triangle',now+.08);}
     else if(type==='victory'){[72,76,79,84].forEach((n,i)=>this.tone(n,.7,.14,'triangle',now+i*.16));}
     else {this.tone(79,.15,.1,'sine');this.tone(84,.26,.08,'sine',now+.1);}

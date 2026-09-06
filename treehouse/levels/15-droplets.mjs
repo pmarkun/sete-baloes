@@ -1,19 +1,23 @@
-import { base, door, ladder, object, platform } from '../components.mjs';
+import { base, door, ladder, platform, key } from '../components.mjs';
 
 export default {
   ...base(),
-  name: 'A chuva que puxa',
+  name: 'As calhas da árvore',
+  theme: 'rain',
+  recovery: true,
   spawn: { x: 45, y: 340 },
   platforms: [
-    platform(30, 340, 180), platform(30, 250, 70), platform(135, 250, 75),
-    platform(30, 160, 180), platform(30, 70, 180),
+    platform(30, 340, 180), platform(30, 250, 75), platform(135, 250, 75),
+    platform(30, 160, 75), platform(135, 160, 75), platform(30, 70, 180),
   ],
   ladders: [ladder(55, 250, 340), ladder(178, 160, 250), ladder(55, 70, 160)],
   droplets: [
-    { id: 'drop-a', x: 102, y: 105, speed: 86, drift: 8, phase: 0 },
-    { id: 'drop-b', x: 150, y: 20, speed: 104, drift: 11, phase: 1.3 },
-    { id: 'drop-c', x: 74, y: 12, speed: 96, drift: 7, phase: 2.5 },
+    { id: 'lower-gutter', x: 150, y: 205, speed: 150, direction: -1, flowSpeed: 55, period: 3.8, active: .66, phase: 1 },
+    { id: 'upper-gutter', x: 90, y: 112, speed: 150, direction: 1, flowSpeed: 55, period: 3.4, active: .66, phase: 1.7 },
+    { id: 'last-gutter', x: 145, y: 22, speed: 170, direction: -1, flowSpeed: 70, period: 4.2, active: .44, phase: .8 },
   ],
-  objects: [object('spikes', 92, 250, { w: 15 })],
-  door: door(115, 70),
+  shelters: [{ x:30,y:208,w:43 },{ x:165,y:208,w:45 },{ x:30,y:118,w:40 },{ x:165,y:118,w:45 },{ x:30,y:28,w:43 },{ x:170,y:28,w:40 }],
+  checkpoints: [{ x:180,y:250 },{ x:55,y:160 }],
+  objects: [key(115,58)],
+  door: door(187, 70, ['key']),
 };

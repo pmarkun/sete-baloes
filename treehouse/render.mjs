@@ -1,4 +1,5 @@
 import { lightState } from './night.mjs';
+import { renderAtmosphere, renderMechanisms } from './mechanics-render.mjs';
 const regions = {
   key: [.80,.15,.14,.27], door: [.015,.51,.245,.37], lever: [.28,.59,.19,.25],
   platform: [.50,.68,.27,.13], ladder: [.80,.50,.15,.38],
@@ -32,6 +33,7 @@ export function render(ctx, game, art, {reducedMotion=false}={}) {
   if(game.flags.mirror)ctx.filter='invert(1)';
   if(game.shake&&!reducedMotion){ctx.fillStyle='#291c20';ctx.fillRect(0,0,240,360);ctx.translate(Math.round(Math.sin(game.time*93)*game.shake*11),Math.round(Math.cos(game.time*77)*game.shake*8));}
   ctx.drawImage(art.background, 0, 0, 240, 360);
+  renderAtmosphere(ctx,game,reducedMotion);
   const sprite = (name,x,y,w,h,flip=false) => {
     const r=night[name]||character[name]||regions[name]||extras[name], img=night[name]?art.night:character[name]?art.character:regions[name]?art.sprites:art.extras;
     ctx.save(); ctx.translate(Math.round(x + (flip ? w : 0)),Math.round(y)); if(flip) ctx.scale(-1,1);
@@ -50,22 +52,7 @@ export function render(ctx, game, art, {reducedMotion=false}={}) {
     if(p.requires && !game.flags[p.requires]) { ctx.save();ctx.setLineDash([2,3]);ctx.strokeStyle='#b68c6870';ctx.strokeRect(p.x,p.y,p.w,5);ctx.restore();continue; }
     for(let x=p.x;x<p.x+p.w;x+=30) sprite('platform',x,p.y,Math.min(31,p.x+p.w-x),11);
   }
-  for(const rope of (game.ropes?.length ? game.ropes : game.level.ropes) || []) {
-    const current = rope;
-    const bobX = current.x ?? current.pivotX;
-    const bobY = current.y ?? current.pivotY + current.length;
-    ctx.save();
-    ctx.strokeStyle='#b98562';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(current.pivotX,current.pivotY);ctx.lineTo(bobX,bobY);ctx.stroke();
-    ctx.fillStyle='#f4d9a4';ctx.fillRect(current.pivotX-3,current.pivotY-2,6,4);
-    ctx.fillStyle='#75474a';ctx.beginPath();ctx.arc(bobX,bobY,4,0,Math.PI*2);ctx.fill();
-    ctx.restore();
-  }
-  for(const drop of game.level.droplets || []) {
-    ctx.save();
-    ctx.strokeStyle='#a8cbd0aa';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(drop.x,drop.y-18);ctx.lineTo(drop.x,drop.y+2);ctx.stroke();
-    ctx.fillStyle='#b9e2df';ctx.beginPath();ctx.moveTo(drop.x,drop.y-6);ctx.quadraticCurveTo(drop.x+7,drop.y+3,drop.x,drop.y+8);ctx.quadraticCurveTo(drop.x-7,drop.y+3,drop.x,drop.y-6);ctx.fill();
-    ctx.restore();
-  }
+  renderMechanisms(ctx,game,sprite,label,reducedMotion);
   const d=game.level.door; sprite('door',d.x-12,d.y-34,24,35);
   if(d.requires.every(f=>game.flags[f])) {ctx.fillStyle='#efc878';ctx.fillRect(d.x+5,d.y-17,2,2);}
   for(const o of game.level.objects) {
@@ -103,7 +90,7 @@ export function render(ctx, game, art, {reducedMotion=false}={}) {
   if(game.ghost)person(game.ghost,true);
   if(game.pastSelf)person(game.pastSelf);
   if(game.chaser){const c=game.chaser;sprite(c.moving&&Math.floor(game.time*8)%2?'hunterWalk':'hunter',c.x-13,c.y-38,26,38,c.facing<0);}
-  person(p,game.flags.cloak);
+  ctx.save();if(p.invulnerable)ctx.globalAlpha=.65;person(p,game.flags.cloak);ctx.restore();
   if(game.flags.lantern)sprite('lantern',p.x+(p.facing<0?-13:5),p.y-17,8,13);
   if(game.hunter){const h=game.hunter;sprite(h.moving&&Math.floor(game.time*8)%2?'hunterWalk':'hunter',h.x-13,h.y-38,26,38,h.facing<0);}
   if(game.inPast){label('ANDAR 4 · PASSADO',120,19,'#bba9ff');if(game.flags.stolenKey)sprite('key',p.x+7,p.y-24,6,12);}
