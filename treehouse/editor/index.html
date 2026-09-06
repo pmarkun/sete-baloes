@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="pt-BR">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#21151e">
+<title>Editor · Casa na Árvore</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css">
+<body>
+  <main class="editor-shell">
+    <header class="editor-header">
+      <div>
+        <a class="back-link" href="../">← JOGO</a>
+        <h1>Editor de fases</h1>
+      </div>
+      <div class="header-actions">
+        <button id="undo" type="button" disabled title="Desfazer (Ctrl/Cmd+Z)">↶</button>
+        <button id="redo" type="button" disabled title="Refazer (Ctrl/Cmd+Shift+Z)">↷</button>
+        <button id="save" type="button">SALVAR</button>
+        <button id="export" type="button">EXPORTAR JSON</button>
+        <button id="import" type="button">IMPORTAR</button>
+        <button id="play" class="primary" type="button">JOGAR PRÉVIA</button>
+      </div>
+    </header>
+
+    <section class="toolbar" aria-label="Arquivo da fase">
+      <label>Rascunho
+        <select id="draft-select"></select>
+      </label>
+      <button id="new" type="button">NOVA FASE</button>
+      <label>Duplicar
+        <select id="source-select"></select>
+      </label>
+      <button id="duplicate" type="button">DUPLICAR</button>
+      <span id="save-state" class="save-state" role="status">Pronto</span>
+    </section>
+
+    <div id="desktop-warning" class="desktop-warning" hidden>Este editor foi desenhado para desktop com pelo menos 1000 px de largura.</div>
+
+    <div class="editor-layout">
+      <aside class="palette panel" aria-labelledby="palette-title">
+        <div class="panel-heading"><div><span class="eyebrow">BIBLIOTECA</span><h2 id="palette-title">Componentes</h2></div><span id="component-count" class="count"></span></div>
+        <p class="panel-copy">Arraste uma peça para o mundo ou clique para adicionar no centro.</p>
+        <div id="palette-list" class="palette-list"></div>
+      </aside>
+
+      <section class="stage-panel panel" aria-labelledby="stage-title">
+        <div class="panel-heading"><div><span class="eyebrow">MUNDO 240 × 360</span><h2 id="stage-title">Montagem</h2></div><span id="selection-label" class="selection-label">Nada selecionado</span></div>
+        <div class="stage-wrap">
+          <canvas id="editor-canvas" width="240" height="360" aria-label="Canvas de edição da fase"></canvas>
+          <div class="stage-help">Grade de 5 unidades · arraste para mover · Delete remove</div>
+        </div>
+        <div class="stage-footer"><span id="validation-summary">Validando…</span><span id="coordinate-readout">x — · y —</span></div>
+      </section>
+
+      <aside class="inspector panel" aria-labelledby="inspector-title">
+        <div class="panel-heading"><div><span class="eyebrow">PROPRIEDADES</span><h2 id="inspector-title">Inspetor</h2></div></div>
+        <div id="inspector-content"></div>
+      </aside>
+    </div>
+
+    <footer class="editor-footer"><span>Editor local · os rascunhos ficam neste navegador.</span><span>Ctrl/Cmd+S salva · Ctrl/Cmd+Z desfaz</span></footer>
+  </main>
+  <input id="file-input" type="file" accept="application/json,.json" hidden>
+  <script type="module" src="editor.mjs"></script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="pt-BR">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#21151e">
+<title>Prévia · Casa na Árvore</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../style.css">
+<link rel="stylesheet" href="play.css">
+<body>
+  <main class="shell preview-shell">
+    <header>
+      <a href="./" aria-label="Voltar ao editor">←</a>
+      <h1><span>PRÉVIA</span><span id="preview-name">Fase customizada</span></h1>
+      <div class="header-tools"><button id="sound" type="button" aria-label="Silenciar música e efeitos">♪</button><button id="pause" type="button" aria-label="Pausar jogo">Ⅱ</button></div>
+    </header>
+    <section class="world"><canvas width="240" height="360" aria-label="Prévia jogável da fase"></canvas>
+      <div id="overlay" hidden><div><div id="overlay-number">EDITOR LOCAL</div><h2 id="overlay-title">Carregando…</h2><p id="overlay-copy">A prévia usa apenas o rascunho em memória.</p><button id="continue" class="primary" type="button">COMEÇAR</button><button id="restart" type="button">REINICIAR</button></div></div>
+    </section>
+    <footer><p id="hint">A prévia não altera progresso nem fases oficiais.</p><div class="controls"><div class="dpad"><button data-key="up" aria-label="Subir">▲</button><button data-key="left" aria-label="Esquerda">◀</button><button data-key="down" aria-label="Descer">▼</button><button data-key="right" aria-label="Direita">▶</button></div><div class="actions"><button data-key="action" aria-label="Interagir">AÇÃO</button><button data-key="jump" class="jump" aria-label="Pular">PULO</button></div></div><div class="keyboard">Setas / WASD · Espaço pula · E interage · Esc pausa</div></footer>
+  </main>
+  <script type="module" src="play.mjs"></script>
+</body>
+</html>

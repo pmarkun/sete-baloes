@@ -1,9 +1,10 @@
-name: Publicar Sete Balões
+name: Publicar jogos
 
 on:
   push:
     branches:
       - codex/sete-baloes-v2
+      - feat/casa-na-arvore
   workflow_dispatch:
 
 permissions:
@@ -28,10 +29,33 @@ jobs:
       - name: Configurar GitHub Pages
         uses: actions/configure-pages@v5
 
-      - name: Empacotar jogo
+      - name: Validar mecânicas e JavaScript
+        run: |
+          node treehouse/engine.test.mjs
+          node treehouse/finale.test.mjs
+          node treehouse/expansion.test.mjs
+          node treehouse/gravity.test.mjs
+          node treehouse/night.test.mjs
+          node treehouse/new-phases.test.mjs
+          node treehouse/editor/editor.test.mjs
+          node --check treehouse/app.mjs
+          node --check treehouse/render.mjs
+          node --check treehouse/audio.mjs
+          node --check treehouse/mechanics.mjs
+          node --check treehouse/mechanics-render.mjs
+          node --check treehouse/editor/editor.mjs
+          node --check treehouse/editor/play.mjs
+
+      - name: Preparar os dois jogos
+        run: |
+          mkdir -p _site
+          cp index.html menu.css _site/
+          cp -r game treehouse _site/
+
+      - name: Empacotar jogos
         uses: actions/upload-pages-artifact@v3
         with:
-          path: game
+          path: _site
 
       - name: Publicar
         id: deployment
